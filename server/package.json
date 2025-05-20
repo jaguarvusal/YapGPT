@@ -2,11 +2,12 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "dist/server.js",
   "type": "module",
   "scripts": {
+    "postinstall": "npm run build",
     "build": "tsc",
-    "start": "npm run build && node dist/server.js",
+    "start": "node dist/server.js",
     "watch": "nodemon dist/server.js",
     "seed": "node dist/seeds/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"

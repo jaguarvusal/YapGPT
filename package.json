@@ -1,10 +1,10 @@
 {
-  "name": "project3",
+  "name": "yapgpt",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "cd server && npm start",
     "start:dev": "concurrently \"cd server && npm run watch\" \"wait-on tcp:3001 && cd client && npm run dev\"",
     "server": "cd server && npm start",
     "server:dev": "cd server && npm run dev",
@@ -13,7 +13,9 @@
     "client:dev": "cd client && npm run dev",
     "seed": "cd server && npm run build && npm run seed",
     "build": "concurrently \"cd server && npm run build\" \"cd client && npm run build\"",
-    "render-build": "npm install && npm run build"
+    "render-build": "npm install && npm run build",
+    "install-all": "cd client && npm install && cd ../server && npm install",
+    "build-all": "cd client && npm run build && cd ../server && npm run build"
   },
   "keywords": [],
   "author": "",
