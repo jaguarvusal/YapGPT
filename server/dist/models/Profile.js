@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 // Define the schema for the Profile document
 const profileSchema = new Schema({
     name: {
@@ -18,7 +18,13 @@ const profileSchema = new Schema({
         type: String,
         required: true,
         minlength: 5,
-    }
+    },
+    skills: [
+        {
+            type: String,
+            trim: true,
+        },
+    ],
 }, {
     timestamps: true,
     toJSON: { getters: true },
