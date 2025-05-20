@@ -1,5 +1,5 @@
 const typeDefs = `
-  type Profile {
+  type Yapper {
     _id: ID
     name: String
     email: String
@@ -9,28 +9,28 @@ const typeDefs = `
 
   type Auth {
     token: ID!
-    profile: Profile
+    yapper: Yapper
   }
   
-  input ProfileInput {
+  input YapperInput {
     name: String!
     email: String!
     password: String!
   }
 
   type Query {
-    profiles: [Profile]!
-    profile(profileId: ID!): Profile
-    me: Profile
+    yappers: [Yapper]!
+    yapper(yapperId: ID!): Yapper
+    me: Yapper
   }
 
   type Mutation {
-    addProfile(input: ProfileInput!): Auth
+    addYapper(input: YapperInput!): Auth
     login(email: String!, password: String!): Auth
 
-    addSkill(profileId: ID!, skill: String!): Profile
-    removeProfile: Profile
-    removeSkill(skill: String!): Profile
+    addSkill(yapperId: ID!, skill: String!): Yapper
+    removeYapper: Yapper
+    removeSkill(skill: String!): Yapper
   }
 `;
 

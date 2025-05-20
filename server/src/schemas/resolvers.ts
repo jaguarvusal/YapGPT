@@ -1,7 +1,7 @@
-import { Profile } from '../models/index.js';
+import { Yapper } from '../models/index.js';
 import { signToken, AuthenticationError } from '../utils/auth.js';
 
-interface Profile {
+interface Yapper {
   _id: string;
   name: string;
   email: string;
@@ -9,11 +9,11 @@ interface Profile {
   skills: string[];
 }
 
-interface ProfileArgs {
-  profileId: string;
+interface YapperArgs {
+  yapperId: string;
 }
 
-interface AddProfileArgs {
+interface AddYapperArgs {
   input:{
     name: string;
     email: string;
@@ -22,56 +22,56 @@ interface AddProfileArgs {
 }
 
 interface AddSkillArgs {
-  profileId: string;
+  yapperId: string;
   skill: string;
 }
 
 interface RemoveSkillArgs {
-  profileId: string;
+  yapperId: string;
   skill: string;
 }
 
 interface Context {
-  user?: Profile;
+  user?: Yapper;
 }
 
 const resolvers = {
   Query: {
-    profiles: async (): Promise<Profile[]> => {
-      return await Profile.find();
+    yappers: async (): Promise<Yapper[]> => {
+      return await Yapper.find();
     },
-    profile: async (_parent: any, { profileId }: ProfileArgs): Promise<Profile | null> => {
-      return await Profile.findOne({ _id: profileId });
+    yapper: async (_parent: any, { yapperId }: YapperArgs): Promise<Yapper | null> => {
+      return await Yapper.findOne({ _id: yapperId });
     },
-    me: async (_parent: any, _args: any, context: Context): Promise<Profile | null> => {
+    me: async (_parent: any, _args: any, context: Context): Promise<Yapper | null> => {
       if (context.user) {
-        return await Profile.findOne({ _id: context.user._id });
+        return await Yapper.findOne({ _id: context.user._id });
       }
       throw AuthenticationError;
     },
   },
   Mutation: {
-    addProfile: async (_parent: any, { input }: AddProfileArgs): Promise<{ token: string; profile: Profile }> => {
-      const profile = await Profile.create({ ...input });
-      const token = signToken(profile.name, profile.email, profile._id);
-      return { token, profile };
+    addYapper: async (_parent: any, { input }: AddYapperArgs): Promise<{ token: string; yapper: Yapper }> => {
+      const yapper = await Yapper.create({ ...input });
+      const token = signToken(yapper.name, yapper.email, yapper._id);
+      return { token, yapper };
     },
-    login: async (_parent: any, { email, password }: { email: string; password: string }): Promise<{ token: string; profile: Profile }> => {
-      const profile = await Profile.findOne({ email });
-      if (!profile) {
+    login: async (_parent: any, { email, password }: { email: string; password: string }): Promise<{ token: string; yapper: Yapper }> => {
+      const yapper = await Yapper.findOne({ email });
+      if (!yapper) {
         throw AuthenticationError;
       }
-      const correctPw = await profile.isCorrectPassword(password);
+      const correctPw = await yapper.isCorrectPassword(password);
       if (!correctPw) {
         throw AuthenticationError;
       }
-      const token = signToken(profile.name, profile.email, profile._id);
-      return { token, profile };
+      const token = signToken(yapper.name, yapper.email, yapper._id);
+      return { token, yapper };
     },
-    addSkill: async (_parent: any, { profileId, skill }: AddSkillArgs, context: Context): Promise<Profile | null> => {
+    addSkill: async (_parent: any, { yapperId, skill }: AddSkillArgs, context: Context): Promise<Yapper | null> => {
       if (context.user) {
-        return await Profile.findOneAndUpdate(
-          { _id: profileId },
+        return await Yapper.findOneAndUpdate(
+          { _id: yapperId },
           {
             $addToSet: { skills: skill },
           },
@@ -83,15 +83,15 @@ const resolvers = {
       }
       throw AuthenticationError;
     },
-    removeProfile: async (_parent: any, _args: any, context: Context): Promise<Profile | null> => {
+    removeYapper: async (_parent: any, _args: any, context: Context): Promise<Yapper | null> => {
       if (context.user) {
-        return await Profile.findOneAndDelete({ _id: context.user._id });
+        return await Yapper.findOneAndDelete({ _id: context.user._id });
       }
       throw AuthenticationError;
     },
-    removeSkill: async (_parent: any, { skill }: RemoveSkillArgs, context: Context): Promise<Profile | null> => {
+    removeSkill: async (_parent: any, { skill }: RemoveSkillArgs, context: Context): Promise<Yapper | null> => {
       if (context.user) {
-        return await Profile.findOneAndUpdate(
+        return await Yapper.findOneAndUpdate(
           { _id: context.user._id },
           { $pull: { skills: skill } },
           { new: true }
