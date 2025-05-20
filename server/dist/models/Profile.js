@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcryptjs';
-// Define the schema for the Profile document
-const profileSchema = new Schema({
+// Define the schema for the Yapper document
+const yapperSchema = new Schema({
     name: {
         type: String,
         required: true,
@@ -29,18 +29,19 @@ const profileSchema = new Schema({
     timestamps: true,
     toJSON: { getters: true },
     toObject: { getters: true },
+    collection: 'Yappers'
 });
 // set up pre-save middleware to create password
-profileSchema.pre('save', async function (next) {
+yapperSchema.pre('save', async function (next) {
     if (this.isNew || this.isModified('password')) {
         const saltRounds = 10;
         this.password = await bcrypt.hash(this.password, saltRounds);
     }
     next();
 });
-// compare the incoming password assert the hashed password
-profileSchema.methods.isCorrectPassword = async function (password) {
+// compare the incoming password with the hashed password
+yapperSchema.methods.isCorrectPassword = async function (password) {
     return bcrypt.compare(password, this.password);
 };
-const Profile = model('Profile', profileSchema);
-export default Profile;
+const Yapper = model('Yapper', yapperSchema);
+export default Yapper;

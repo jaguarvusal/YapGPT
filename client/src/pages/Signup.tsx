@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useMutation } from '@apollo/client';
-import { ADD_PROFILE } from '../utils/mutations';
+import { ADD_YAPPER } from '../utils/mutations';
 
 import Auth from '../utils/auth';
 
@@ -12,7 +12,7 @@ const Signup = () => {
     email: '',
     password: '',
   });
-  const [addProfile, { error, data }] = useMutation(ADD_PROFILE);
+  const [addYapper, { error, data }] = useMutation(ADD_YAPPER);
 
   // update state based on form input changes
   const handleChange = (event: ChangeEvent) => {
@@ -30,11 +30,11 @@ const Signup = () => {
     console.log(formState);
 
     try {
-      const { data } = await addProfile({
+      const { data } = await addYapper({
         variables: { input: { ...formState } },
       });
 
-      Auth.login(data.addProfile.token);
+      Auth.login(data.addYapper.token);
     } catch (e) {
       console.error(e);
     }

@@ -1,2 +1,2 @@
-import Profile from './Profile.js';
-export { Profile };
+import Yapper from './Profile.js';
+export { Yapper };

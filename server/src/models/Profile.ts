@@ -42,6 +42,7 @@ const yapperSchema = new Schema<IYapper>(
     timestamps: true,
     toJSON: { getters: true },
     toObject: { getters: true },
+    collection: 'Yappers'
   }
 );
 
