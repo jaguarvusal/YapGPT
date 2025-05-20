@@ -1,10 +1,10 @@
 import { gql } from '@apollo/client';
 
-export const ADD_PROFILE = gql`
-  mutation addProfile($input: ProfileInput!) {
-    addProfile(input: $input) {
+export const ADD_YAPPER = gql`
+  mutation addYapper($input: YapperInput!) {
+    addYapper(input: $input) {
       token
-      profile {
+      yapper {
         _id
         name
       }
@@ -12,12 +12,11 @@ export const ADD_PROFILE = gql`
   }
 `;
 
-
 export const LOGIN_USER = gql`
   mutation login($email: String!, $password: String!) {
     login(email: $email, password: $password) {
       token
-      profile {
+      yapper {
         _id
         name
       }

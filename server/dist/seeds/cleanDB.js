@@ -1,8 +1,8 @@
-import { Profile } from '../models/index.js';
+import { Yapper } from '../models/index.js';
 const cleanDB = async () => {
     try {
-        await Profile.deleteMany({});
-        console.log('Profile collection cleaned.');
+        await Yapper.deleteMany({});
+        console.log('Yapper collection cleaned.');
     }
     catch (err) {
         console.error('Error cleaning collections:', err);

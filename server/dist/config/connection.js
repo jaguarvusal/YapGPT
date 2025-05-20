@@ -1,11 +1,11 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import mongoose from 'mongoose';
-const MONGODB_URI = process.env.MONGODB_URI || '';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/YapGPT';
 const db = async () => {
     try {
         await mongoose.connect(MONGODB_URI);
-        console.log('Database connected.');
+        console.log('Database connected to YapGPT.');
         return mongoose.connection;
     }
     catch (error) {

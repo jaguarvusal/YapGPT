@@ -1,41 +1,41 @@
-import { Profile } from '../models/index.js';
+import { Yapper } from '../models/index.js';
 import { signToken, AuthenticationError } from '../utils/auth.js';
 const resolvers = {
     Query: {
-        profiles: async () => {
-            return await Profile.find();
+        yappers: async () => {
+            return await Yapper.find();
         },
-        profile: async (_parent, { profileId }) => {
-            return await Profile.findOne({ _id: profileId });
+        yapper: async (_parent, { yapperId }) => {
+            return await Yapper.findOne({ _id: yapperId });
         },
         me: async (_parent, _args, context) => {
             if (context.user) {
-                return await Profile.findOne({ _id: context.user._id });
+                return await Yapper.findOne({ _id: context.user._id });
             }
             throw AuthenticationError;
         },
     },
     Mutation: {
-        addProfile: async (_parent, { input }) => {
-            const profile = await Profile.create({ ...input });
-            const token = signToken(profile.name, profile.email, profile._id);
-            return { token, profile };
+        addYapper: async (_parent, { input }) => {
+            const yapper = await Yapper.create({ ...input });
+            const token = signToken(yapper.name, yapper.email, yapper._id);
+            return { token, yapper };
         },
         login: async (_parent, { email, password }) => {
-            const profile = await Profile.findOne({ email });
-            if (!profile) {
+            const yapper = await Yapper.findOne({ email });
+            if (!yapper) {
                 throw AuthenticationError;
             }
-            const correctPw = await profile.isCorrectPassword(password);
+            const correctPw = await yapper.isCorrectPassword(password);
             if (!correctPw) {
                 throw AuthenticationError;
             }
-            const token = signToken(profile.name, profile.email, profile._id);
-            return { token, profile };
+            const token = signToken(yapper.name, yapper.email, yapper._id);
+            return { token, yapper };
         },
-        addSkill: async (_parent, { profileId, skill }, context) => {
+        addSkill: async (_parent, { yapperId, skill }, context) => {
             if (context.user) {
-                return await Profile.findOneAndUpdate({ _id: profileId }, {
+                return await Yapper.findOneAndUpdate({ _id: yapperId }, {
                     $addToSet: { skills: skill },
                 }, {
                     new: true,
@@ -44,15 +44,15 @@ const resolvers = {
             }
             throw AuthenticationError;
         },
-        removeProfile: async (_parent, _args, context) => {
+        removeYapper: async (_parent, _args, context) => {
             if (context.user) {
-                return await Profile.findOneAndDelete({ _id: context.user._id });
+                return await Yapper.findOneAndDelete({ _id: context.user._id });
             }
             throw AuthenticationError;
         },
         removeSkill: async (_parent, { skill }, context) => {
             if (context.user) {
-                return await Profile.findOneAndUpdate({ _id: context.user._id }, { $pull: { skills: skill } }, { new: true });
+                return await Yapper.findOneAndUpdate({ _id: context.user._id }, { $pull: { skills: skill } }, { new: true });
             }
             throw AuthenticationError;
         },
