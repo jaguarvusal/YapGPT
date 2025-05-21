@@ -12,8 +12,6 @@ const Dashboard: React.FC = () => {
       if (!containerRef.current) return;
 
       const container = containerRef.current;
-      const scrollTop = container.scrollTop;
-      const containerHeight = container.clientHeight;
       
       // Get all unit sections
       const unitSections = container.querySelectorAll('[data-unit-section]');

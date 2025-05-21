@@ -6,7 +6,7 @@ import {
   createHttpLink,
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { Outlet } from 'react-router-dom';
+// import { Outlet } from 'react-router-dom';
 
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
