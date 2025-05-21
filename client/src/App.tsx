@@ -8,8 +8,9 @@ import {
 import { setContext } from '@apollo/client/link/context';
 import { Outlet } from 'react-router-dom';
 
-import Header from './components/Header';
-import Footer from './components/Footer';
+import Sidebar from './components/Sidebar';
+import Dashboard from './components/Dashboard';
+import RightSidebar from './components/RightSidebar';
 
 const httpLink = createHttpLink({
   uri: '/graphql',
@@ -37,12 +38,21 @@ const client = new ApolloClient({
 function App() {
   return (
     <ApolloProvider client={client}>
-      <div className="flex-column justify-flex-start min-100-vh">
-        <Header />
-        <div className="container">
-          <Outlet />
+      <div className="flex w-full h-screen bg-gray-800">
+        {/* Left Sidebar */}
+        <div className="hidden md:flex w-64 bg-gray-800 text-black flex-col py-4 pl-6 fixed left-0 top-0 h-full border-r border-gray-700">
+          <Sidebar />
         </div>
-        <Footer />
+
+        {/* Main Content Area with Dashboard */}
+        <div className="flex-1 md:ml-64 lg:mr-[450px] bg-gray-800">
+          <Dashboard />
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="hidden md:block w-[450px] border-l border-gray-700 p-4 bg-gray-800 fixed right-0 top-0 h-full">
+          <RightSidebar />
+        </div>
       </div>
     </ApolloProvider>
   );
