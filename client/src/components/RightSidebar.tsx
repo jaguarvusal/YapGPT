@@ -26,7 +26,7 @@ const RightSidebar: React.FC = () => {
                 {/* Weekly Calendar */}
                 <div className="mt-4">
                   <div className="flex justify-between mb-2">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
                       <span key={day} className="text-xs text-gray-500 w-6 text-center">{day}</span>
                     ))}
                   </div>
