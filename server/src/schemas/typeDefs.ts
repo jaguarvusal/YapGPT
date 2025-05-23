@@ -26,7 +26,7 @@ const typeDefs = `
 
   type Mutation {
     addYapper(input: YapperInput!): Auth
-    login(email: String!, password: String!): Auth
+    login(identifier: String!, password: String!): Auth
 
     addSkill(yapperId: ID!, skill: String!): Yapper
     removeYapper: Yapper

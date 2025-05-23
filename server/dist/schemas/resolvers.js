@@ -21,17 +21,30 @@ const resolvers = {
             const token = signToken(yapper.name, yapper.email, yapper._id);
             return { token, yapper };
         },
-        login: async (_parent, { email, password }) => {
-            const yapper = await Yapper.findOne({ email });
-            if (!yapper) {
-                throw AuthenticationError;
+        login: async (_parent, { identifier, password }) => {
+            try {
+                // Try to find user by email first
+                let yapper = await Yapper.findOne({ email: identifier });
+                // If not found by email, try to find by name
+                if (!yapper) {
+                    yapper = await Yapper.findOne({ name: identifier });
+                }
+                if (!yapper) {
+                    throw new AuthenticationError('Invalid credentials');
+                }
+                const correctPw = await yapper.isCorrectPassword(password);
+                if (!correctPw) {
+                    throw new AuthenticationError('Invalid credentials');
+                }
+                const token = signToken(yapper.name, yapper.email, yapper._id);
+                return { token, yapper };
             }
-            const correctPw = await yapper.isCorrectPassword(password);
-            if (!correctPw) {
-                throw AuthenticationError;
+            catch (error) {
+                if (error instanceof AuthenticationError) {
+                    throw error;
+                }
+                throw new AuthenticationError('An error occurred during login');
             }
-            const token = signToken(yapper.name, yapper.email, yapper._id);
-            return { token, yapper };
         },
         addSkill: async (_parent, { yapperId, skill }, context) => {
             if (context.user) {

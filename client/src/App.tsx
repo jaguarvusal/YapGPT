@@ -40,18 +40,24 @@ function App() {
     <ApolloProvider client={client}>
       <div className="flex w-full h-screen bg-gray-800">
         {/* Left Sidebar */}
-        <div className="hidden md:flex w-64 bg-gray-800 text-black flex-col py-4 pl-6 fixed left-0 top-0 h-full border-r border-gray-700">
-          <Sidebar />
+        <div className="hidden md:flex w-64 bg-gray-800 text-black flex-col py-4 pl-6 fixed left-0 top-0 h-full border-r border-gray-700 z-10">
+          <div className="sticky top-0">
+            <Sidebar />
+          </div>
         </div>
 
         {/* Main Content Area with Dashboard */}
-        <div className="flex-1 md:ml-64 lg:mr-[450px] bg-gray-800">
-          <Dashboard />
+        <div className="flex-1 md:ml-64 lg:mr-[450px] bg-gray-800 h-screen">
+          <div id="scroll-container" className="h-full overflow-y-auto overscroll-contain hide-scrollbar">
+            <Dashboard />
+          </div>
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden md:block w-[450px] border-l border-gray-700 p-4 bg-gray-800 fixed right-0 top-0 h-full">
-          <RightSidebar />
+        <div className="hidden md:block w-[450px] p-4 bg-gray-800 fixed right-0 top-0 h-full z-10">
+          <div id="right-sidebar-scroll" className="h-full overflow-y-auto hide-scrollbar">
+            <RightSidebar />
+          </div>
         </div>
       </div>
     </ApolloProvider>

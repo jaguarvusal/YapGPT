@@ -13,8 +13,8 @@ export const ADD_YAPPER = gql`
 `;
 
 export const LOGIN_USER = gql`
-  mutation login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
+  mutation login($identifier: String!, $password: String!) {
+    login(identifier: $identifier, password: $password) {
       token
       yapper {
         _id

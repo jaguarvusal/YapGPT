@@ -32,8 +32,12 @@ export const signToken = (username: string, email: string, _id: unknown) => {
 };
 
 export class AuthenticationError extends GraphQLError {
-  constructor(message: string) {
-    super(message, undefined, undefined, undefined, ['UNAUTHENTICATED']);
+  constructor(message: string = 'Not authenticated') {
+    super(message, {
+      extensions: {
+        code: 'UNAUTHENTICATED',
+      },
+    });
     Object.defineProperty(this, 'name', { value: 'AuthenticationError' });
   }
 };

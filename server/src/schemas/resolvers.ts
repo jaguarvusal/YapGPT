@@ -56,17 +56,33 @@ const resolvers = {
       const token = signToken(yapper.name, yapper.email, yapper._id);
       return { token, yapper };
     },
-    login: async (_parent: any, { email, password }: { email: string; password: string }): Promise<{ token: string; yapper: Yapper }> => {
-      const yapper = await Yapper.findOne({ email });
-      if (!yapper) {
-        throw AuthenticationError;
+    login: async (_parent: any, { identifier, password }: { identifier: string; password: string }): Promise<{ token: string; yapper: Yapper }> => {
+      try {
+        // Try to find user by email first
+        let yapper = await Yapper.findOne({ email: identifier });
+        
+        // If not found by email, try to find by name
+        if (!yapper) {
+          yapper = await Yapper.findOne({ name: identifier });
+        }
+
+        if (!yapper) {
+          throw new AuthenticationError('Invalid credentials');
+        }
+
+        const correctPw = await yapper.isCorrectPassword(password);
+        if (!correctPw) {
+          throw new AuthenticationError('Invalid credentials');
+        }
+
+        const token = signToken(yapper.name, yapper.email, yapper._id);
+        return { token, yapper };
+      } catch (error) {
+        if (error instanceof AuthenticationError) {
+          throw error;
+        }
+        throw new AuthenticationError('An error occurred during login');
       }
-      const correctPw = await yapper.isCorrectPassword(password);
-      if (!correctPw) {
-        throw AuthenticationError;
-      }
-      const token = signToken(yapper.name, yapper.email, yapper._id);
-      return { token, yapper };
     },
     addSkill: async (_parent: any, { yapperId, skill }: AddSkillArgs, context: Context): Promise<Yapper | null> => {
       if (context.user) {
