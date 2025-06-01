@@ -1,5 +1,7 @@
 import { Yapper } from '../models/index.js';
 import { signToken, AuthenticationError } from '../utils/auth.js';
+import { saveBase64ToFile, transcribeAudio, cleanupFile } from '../utils/audio.js';
+import { analyzeTranscript } from '../utils/gpt.js';
 
 interface Yapper {
   _id: string;
@@ -33,6 +35,11 @@ interface RemoveSkillArgs {
 
 interface Context {
   user?: Yapper;
+}
+
+interface UploadAudioInput {
+  audioBase64: string;
+  filename: string;
 }
 
 const resolvers = {
@@ -114,6 +121,38 @@ const resolvers = {
         );
       }
       throw AuthenticationError;
+    },
+    uploadAudio: async (_parent: any, { input }: { input: UploadAudioInput }): Promise<{
+      transcript: string;
+      confidenceScore: number;
+      fillerWordCount: number;
+      suggestions: string[];
+    }> => {
+      try {
+        console.log('Starting audio upload process...');
+        
+        // Save the audio file
+        const filePath = await saveBase64ToFile(input.audioBase64, input.filename);
+        console.log('Audio file saved at:', filePath);
+        
+        // Transcribe the audio using OpenAI Whisper
+        const transcript = await transcribeAudio(filePath);
+        console.log('Transcript received:', transcript);
+        
+        // Clean up the file
+        await cleanupFile(filePath);
+        console.log('Audio file cleaned up');
+
+        // Analyze the transcript using GPT-4
+        console.log('Sending transcript to GPT for analysis...');
+        const analysis = await analyzeTranscript(transcript);
+        console.log('GPT Analysis received:', analysis);
+        
+        return analysis;
+      } catch (error) {
+        console.error('Error processing audio:', error);
+        throw new Error('Failed to process audio');
+      }
     },
   },
 };

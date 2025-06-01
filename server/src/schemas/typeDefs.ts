@@ -18,6 +18,18 @@ const typeDefs = `
     password: String!
   }
 
+  input UploadAudioInput {
+    audioBase64: String!
+    filename: String!
+  }
+
+  type AudioResponse {
+    transcript: String!
+    confidenceScore: Float!
+    fillerWordCount: Int!
+    suggestions: [String]!
+  }
+
   type Query {
     yappers: [Yapper]!
     yapper(yapperId: ID!): Yapper
@@ -31,6 +43,7 @@ const typeDefs = `
     addSkill(yapperId: ID!, skill: String!): Yapper
     removeYapper: Yapper
     removeSkill(skill: String!): Yapper
+    uploadAudio(input: UploadAudioInput!): AudioResponse!
   }
 `;
 

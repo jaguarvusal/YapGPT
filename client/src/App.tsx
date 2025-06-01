@@ -1,4 +1,6 @@
 // import './App.css';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
 import {
   ApolloClient,
   InMemoryCache,
@@ -6,14 +8,12 @@ import {
   createHttpLink,
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-// import { Outlet } from 'react-router-dom';
 
 import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
 import RightSidebar from './components/RightSidebar';
 
 const httpLink = createHttpLink({
-  uri: '/graphql',
+  uri: 'http://localhost:3001/graphql',
 });
 
 // Construct request middleware that will attach the JWT token to every request as an `authorization` header
@@ -35,7 +35,7 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
 });
 
-function App() {
+const App: React.FC = () => {
   return (
     <ApolloProvider client={client}>
       <div className="flex w-full h-screen bg-gray-800">
@@ -46,10 +46,10 @@ function App() {
           </div>
         </div>
 
-        {/* Main Content Area with Dashboard */}
+        {/* Main Content Area */}
         <div className="flex-1 md:ml-64 lg:mr-[450px] bg-gray-800 h-screen">
           <div id="scroll-container" className="h-full overflow-y-auto overscroll-contain hide-scrollbar">
-            <Dashboard />
+            <Outlet />
           </div>
         </div>
 
@@ -62,6 +62,6 @@ function App() {
       </div>
     </ApolloProvider>
   );
-}
+};
 
 export default App;

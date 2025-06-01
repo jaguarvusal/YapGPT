@@ -1,13 +1,78 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const unitNames = [
+  'Filler Words',
+  'Grammar',
+  'Word Choice',
+  'Conciseness',
+  'Charisma'
+];
+
+const unitTaglines = [
+  'Where clarity begins.',
+  'Polish your sentences until they shine.',
+  'Say more with less — and better.',
+  'Every word earns its place.',
+  'Be unforgettable.'
+];
+
+const lessonNames = [
+  // Unit 1
+  ['The "Um" Epidemic', 'Spot the Crutch', 'Clean Start', 'Fill the Silence', 'Zero-Filler Mission'],
+  // Unit 2
+  ['Ramble Mode Off', 'Main Point First', 'Trim the Fat', 'Think Then Speak', 'Elevator Pitch Master'],
+  // Unit 3
+  ['Speed Check', 'Slow is Smooth', 'Pause for Power', 'No Filler, Just Flow', 'Mic Drop Timing'],
+  // Unit 4
+  ['Voice Check', 'Power Phrases', 'No Shrinking Words', 'Volume & Variance', 'Command the Room'],
+  // Unit 5
+  ['The Smile Effect', 'Story Mode On', 'Flirt Without Cringe', 'Vibe Control', 'Speak to Be Remembered']
+];
 
 const Dashboard: React.FC = () => {
-  // Generate array of 10 levels
+  const navigate = useNavigate();
+  // Generate array of 25 levels (5 levels per unit)
   const levels = Array.from({ length: 25 }, (_, i) => i + 1);
   const [currentUnit, setCurrentUnit] = useState(1);
-  const [activeLevel, setActiveLevel] = useState(4);
+  const [activeLevel, setActiveLevel] = useState(() => {
+    // Initialize from localStorage or default to 1
+    const savedLevel = localStorage.getItem('activeLevel');
+    return savedLevel ? parseInt(savedLevel, 10) : 1;
+  });
   const [showLessonTooltip, setShowLessonTooltip] = useState(false);
   const [showLockedTooltip, setShowLockedTooltip] = useState<number | null>(null);
+  const [showPracticeTooltip, setShowPracticeTooltip] = useState<number | null>(null);
+  const [showSkipTooltip, setShowSkipTooltip] = useState<number | null>(null);
+  const [showSkipConfirmation, setShowSkipConfirmation] = useState<{unit: number, level: number} | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to get the actual level number within a unit (1-5)
+  const getLevelInUnit = (level: number) => {
+    return ((level - 1) % 5) + 1;
+  };
+
+  // Helper function to get the unit number for a level
+  const getUnitForLevel = (level: number) => {
+    return Math.ceil(level / 5);
+  };
+
+  useEffect(() => {
+    const handleLevelCompleted = (event: CustomEvent) => {
+      const { nextLevel } = event.detail;
+      setActiveLevel(nextLevel);
+    };
+
+    window.addEventListener('levelCompleted', handleLevelCompleted as EventListener);
+    return () => {
+      window.removeEventListener('levelCompleted', handleLevelCompleted as EventListener);
+    };
+  }, []);
+
+  // Save active level to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('activeLevel', activeLevel.toString());
+  }, [activeLevel]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -16,10 +81,14 @@ const Dashboard: React.FC = () => {
       const isTooltipClick = target.closest('[data-tooltip-content]');
       // Check if click is on a bubble
       const isBubbleClick = target.closest('[data-bubble]');
+      // Check if click is on modal
+      const isModalClick = target.closest('[data-modal]');
       
-      if (!isTooltipClick && !isBubbleClick) {
+      if (!isTooltipClick && !isBubbleClick && !isModalClick) {
         setShowLessonTooltip(false);
         setShowLockedTooltip(null);
+        setShowPracticeTooltip(null);
+        setShowSkipTooltip(null);
       }
     };
 
@@ -155,6 +224,43 @@ const Dashboard: React.FC = () => {
     };
   }, []);
 
+  const handleStartLesson = (unit: number, level: number) => {
+    try {
+      // Close any open tooltips
+      setShowLessonTooltip(false);
+      setShowLockedTooltip(null);
+      setShowPracticeTooltip(null);
+      
+      // Get the actual level number within the unit (1-5)
+      const levelInUnit = getLevelInUnit(level);
+      
+      // Navigate to the lesson page with string parameters
+      const path = `/unit/${unit.toString()}/lesson/${levelInUnit.toString()}`;
+      console.log('Navigating to:', path); // Debug log
+      navigate(path);
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
+  // Add skip confirmation handler
+  const handleSkipConfirm = () => {
+    if (showSkipConfirmation) {
+      const { unit, level } = showSkipConfirmation;
+      // Update localStorage to mark this level as active
+      localStorage.setItem('activeLevel', level.toString());
+      setActiveLevel(level);
+      setShowSkipConfirmation(null);
+      // Navigate to the lesson
+      handleStartLesson(unit, level);
+    }
+  };
+
+  // Add skip cancel handler
+  const handleSkipCancel = () => {
+    setShowSkipConfirmation(null);
+  };
+
   return (
     <div className="flex-1 flex flex-col min-h-full">
       {/* Header Section */}
@@ -165,14 +271,15 @@ const Dashboard: React.FC = () => {
         : currentUnit === 4 ? 'bg-indigo-800'
         : 'bg-green-800'
       }`}>
-        <h1 className="text-2xl font-semibold mb-1 text-white">Section 1 · Unit {currentUnit}</h1>
-        <p className="text-gray-300 text-sm">Filler Words</p>
+        <h1 className="text-2xl font-semibold mb-1 text-white">Unit {currentUnit} · {unitNames[currentUnit - 1]}</h1>
+        <p className="text-gray-300 text-sm italic">"{unitTaglines[currentUnit - 1]}"</p>
       </header>
 
       {/* Scrollable Content */}
       <main className="flex-1 p-4 md:p-6" ref={containerRef} onClick={() => {
         setShowLessonTooltip(false);
         setShowLockedTooltip(null);
+        setShowPracticeTooltip(null);
       }}>
         {/* Level Bubbles */}
         <div className="flex flex-col items-center relative" onClick={(e) => e.stopPropagation()}>
@@ -211,7 +318,7 @@ const Dashboard: React.FC = () => {
                                 : unit === 4 ? 'bg-indigo-800 border-indigo-900 hover:ring-indigo-800/50'
                                 : 'bg-green-800 border-green-900 hover:ring-green-800/50')
                               : 'bg-gray-500 border-gray-700 hover:ring-gray-500/50'
-                      } border-b-4 ${!showLessonTooltip && !showLockedTooltip ? 'active:translate-y-1 active:border-b-0' : ''} ${
+                      } border-b-4 ${!showLessonTooltip && !showLockedTooltip && !showPracticeTooltip ? 'active:translate-y-1 active:border-b-0' : ''} ${
                         activeLevel === level ? 'after:content-[""] after:absolute after:inset-[-10px_-10px_-14px_-10px] after:rounded-full after:border-4 after:border-white/30' : ''
                       }`}
                       style={{ marginLeft: `${offset}px` }}
@@ -219,13 +326,23 @@ const Dashboard: React.FC = () => {
                         if (level === activeLevel) {
                           setShowLessonTooltip(!showLessonTooltip);
                           setShowLockedTooltip(null);
+                          setShowPracticeTooltip(null);
+                          setShowSkipTooltip(null);
                         } else if (level > activeLevel) {
-                          setShowLockedTooltip(showLockedTooltip === level ? null : level);
+                          if (level % 5 === 1) {
+                            setShowSkipTooltip(showSkipTooltip === level ? null : level);
+                            setShowLockedTooltip(null);
+                          } else {
+                            setShowLockedTooltip(showLockedTooltip === level ? null : level);
+                            setShowSkipTooltip(null);
+                          }
                           setShowLessonTooltip(false);
+                          setShowPracticeTooltip(null);
                         } else {
-                          setActiveLevel(level);
+                          setShowPracticeTooltip(showPracticeTooltip === level ? null : level);
                           setShowLessonTooltip(false);
                           setShowLockedTooltip(null);
+                          setShowSkipTooltip(null);
                         }
                       }}
                       data-bubble
@@ -234,8 +351,14 @@ const Dashboard: React.FC = () => {
                         {activeLevel === level && !showLessonTooltip && (
                           <div className="animate-bounce-slow mb-1 z-50 absolute -top-12">
                             <div className="relative">
-                              <div className="bg-black text-white px-4 py-2 rounded-lg text-sm border-2 border-gray-500">
-                                START
+                              <div className="bg-black px-4 py-2 rounded-lg text-sm border-2 border-gray-500">
+                                <span className={`font-bold tracking-wider ${
+                                  unit === 1 ? 'text-orange-500' 
+                                  : unit === 2 ? 'text-blue-400'
+                                  : unit === 3 ? 'text-purple-400'
+                                  : unit === 4 ? 'text-indigo-400'
+                                  : 'text-green-400'
+                                }`}>START</span>
                               </div>
                               <div className="w-2.5 h-2.5 bg-black transform rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 border-r border-b border-gray-500"></div>
                             </div>
@@ -253,9 +376,15 @@ const Dashboard: React.FC = () => {
                                   : unit === 4 ? 'bg-indigo-800'
                                   : 'bg-green-800'
                                 }`}>
-                                  <p className="text-white font-semibold text-base">Filler Words</p>
-                                  <p className="text-white/80 text-xs mt-1.5">Lesson {level % 5 || 5} of 5</p>
-                                  <button className="w-full mt-2 bg-white text-gray-800 py-1.5 px-3 rounded-lg hover:bg-gray-100 transition-all duration-150 text-center border-b-4 border-gray-300 active:translate-y-1 active:border-b-0 text-sm font-medium shadow-[0_4px_0_rgba(0,0,0,0.1)] active:shadow-none">
+                                  <p className="text-white font-semibold text-base">{lessonNames[unit - 1][(level - 1) % 5]}</p>
+                                  <p className="text-white/80 text-xs mt-1.5">Lesson {(level - 1) % 5 + 1} of 5</p>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStartLesson(unit, level);
+                                    }}
+                                    className="w-full mt-2 bg-white text-gray-800 py-1.5 px-3 rounded-lg hover:bg-gray-100 transition-all duration-150 text-center border-b-4 border-gray-300 active:translate-y-1 active:border-b-0 text-sm font-medium shadow-[0_4px_0_rgba(0,0,0,0.1)] active:shadow-none"
+                                  >
                                     START
                                   </button>
                                 </div>
@@ -287,15 +416,92 @@ const Dashboard: React.FC = () => {
                             </div>
                           </>
                         )}
+                        {showPracticeTooltip === level && (
+                          <>
+                            <div className="absolute -inset-4 z-[1000] bg-transparent" onClick={() => setShowPracticeTooltip(null)}></div>
+                            <div className="mb-1 z-[1001] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
+                              <div className="relative">
+                                <div className={`px-4 py-3 rounded-lg text-sm border-2 border-gray-600 min-w-[220px] ${
+                                  unit === 1 ? 'bg-orange-600' 
+                                  : unit === 2 ? 'bg-blue-800'
+                                  : unit === 3 ? 'bg-purple-800'
+                                  : unit === 4 ? 'bg-indigo-800'
+                                  : 'bg-green-800'
+                                }`}>
+                                  <p className="text-white font-semibold text-base">{lessonNames[unit - 1][(level - 1) % 5]}</p>
+                                  <p className="text-white/80 text-xs mt-1.5">Lesson {(level - 1) % 5 + 1} of 5</p>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStartLesson(unit, level);
+                                    }}
+                                    className="w-full mt-2 bg-white text-gray-800 py-1.5 px-3 rounded-lg hover:bg-gray-100 transition-all duration-150 text-center border-b-4 border-gray-300 active:translate-y-1 active:border-b-0 text-sm font-medium shadow-[0_4px_0_rgba(0,0,0,0.1)] active:shadow-none"
+                                  >
+                                    PRACTICE
+                                  </button>
+                                </div>
+                                <div className={`w-3 h-3 transform rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2 border-b-2 border-r-2 border-gray-600 ${
+                                  unit === 1 ? 'bg-orange-600' 
+                                  : unit === 2 ? 'bg-blue-800'
+                                  : unit === 3 ? 'bg-purple-800'
+                                  : unit === 4 ? 'bg-indigo-800'
+                                  : 'bg-green-800'
+                                }`}></div>
+                              </div>
+                            </div>
+                          </>
+                        )}
                         {level % 5 === 1 && level !== activeLevel && level > activeLevel && (
                           <div className="animate-bounce-slow mb-1 z-50 absolute -top-12">
                             <div className="relative">
-                              <div className="bg-black text-white px-4 py-2 rounded-lg text-sm whitespace-nowrap border-2 border-gray-500">
-                                SKIP HERE?
+                              <div className="bg-black px-4 py-2 rounded-lg text-sm whitespace-nowrap border-2 border-gray-500">
+                                <span className={`font-bold tracking-wider ${
+                                  unit === 1 ? 'text-orange-500' 
+                                  : unit === 2 ? 'text-blue-400'
+                                  : unit === 3 ? 'text-purple-400'
+                                  : unit === 4 ? 'text-indigo-400'
+                                  : 'text-green-400'
+                                }`}>SKIP HERE?</span>
                               </div>
                               <div className="w-2.5 h-2.5 bg-black transform rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 border-r border-b border-gray-500"></div>
                             </div>
                           </div>
+                        )}
+                        {showSkipTooltip === level && (
+                          <>
+                            <div className="absolute -inset-4 z-[1000] bg-transparent" onClick={() => setShowSkipTooltip(null)}></div>
+                            <div className="mb-1 z-[1001] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
+                              <div className="relative">
+                                <div className={`px-4 py-3 rounded-lg text-sm border-2 border-gray-600 min-w-[220px] ${
+                                  unit === 1 ? 'bg-orange-600' 
+                                  : unit === 2 ? 'bg-blue-800'
+                                  : unit === 3 ? 'bg-purple-800'
+                                  : unit === 4 ? 'bg-indigo-800'
+                                  : 'bg-green-800'
+                                }`}>
+                                  <p className="text-white font-semibold text-base">{lessonNames[unit - 1][(level - 1) % 5]}</p>
+                                  <p className="text-white/80 text-xs mt-1.5">Lesson {(level - 1) % 5 + 1} of 5</p>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowSkipConfirmation({ unit, level });
+                                      setShowSkipTooltip(null);
+                                    }}
+                                    className="w-full mt-2 bg-white text-gray-800 py-1.5 px-3 rounded-lg hover:bg-gray-100 transition-all duration-150 text-center border-b-4 border-gray-300 active:translate-y-1 active:border-b-0 text-sm font-medium shadow-[0_4px_0_rgba(0,0,0,0.1)] active:shadow-none"
+                                  >
+                                    SKIP
+                                  </button>
+                                </div>
+                                <div className={`w-3 h-3 transform rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2 border-b-2 border-r-2 border-gray-600 ${
+                                  unit === 1 ? 'bg-orange-600' 
+                                  : unit === 2 ? 'bg-blue-800'
+                                  : unit === 3 ? 'bg-purple-800'
+                                  : unit === 4 ? 'bg-indigo-800'
+                                  : 'bg-green-800'
+                                }`}></div>
+                              </div>
+                            </div>
+                          </>
                         )}
                         <span className="text-base font-medium text-white">
                           {level < activeLevel ? '✓' : `Level ${level}`}
@@ -308,6 +514,32 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
       </main>
+
+      {/* Skip Confirmation Modal */}
+      {showSkipConfirmation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[2000]" data-modal>
+          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-white mb-4">Skip to Level {showSkipConfirmation.level}?</h3>
+            <p className="text-gray-300 mb-6">
+              This will mark all previous levels as completed. You can still practice them later, but your progress will start from this level.
+            </p>
+            <div className="flex space-x-4">
+              <button
+                onClick={handleSkipCancel}
+                className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                NEVERMIND
+              </button>
+              <button
+                onClick={handleSkipConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                CONFIRM
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

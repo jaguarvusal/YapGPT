@@ -33,3 +33,14 @@ export const REMOVE_SKILL = gql`
     }
   }
 `;
+
+export const UPLOAD_AUDIO = gql`
+  mutation UploadAudio($input: UploadAudioInput!) {
+    uploadAudio(input: $input) {
+      transcript
+      confidenceScore
+      fillerWordCount
+      suggestions
+    }
+  }
+`;

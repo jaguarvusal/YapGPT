@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const Sidebar: React.FC = () => {
-  const [selectedButton, setSelectedButton] = useState<string | null>(null);
+  const [selectedButton, setSelectedButton] = useState<string | null>('yap');
 
   return (
     <>
