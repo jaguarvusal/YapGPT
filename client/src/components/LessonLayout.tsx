@@ -4,7 +4,7 @@ import LessonHearts from './LessonHearts';
 
 const LessonLayout: React.FC = () => {
   return (
-    <div className="w-full h-screen bg-gray-800">
+    <div className="w-full h-screen bg-[#f3e0b7]">
       <LessonHearts />
       <div className="h-full overflow-y-auto overscroll-contain hide-scrollbar">
         <Outlet />

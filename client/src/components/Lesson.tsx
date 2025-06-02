@@ -61,6 +61,7 @@ const Lesson: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [requirementStatuses, setRequirementStatuses] = useState<Record<string, RequirementStatus>>({});
   const [allRequirementsMet, setAllRequirementsMet] = useState(false);
+  const [showNoHeartsPopup, setShowNoHeartsPopup] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -109,6 +110,7 @@ const Lesson: React.FC = () => {
 
   const startCountdown = useCallback(() => {
     if (hearts === 0) {
+      setShowNoHeartsPopup(true);
       return; // Don't start if no hearts left
     }
     setStatus('countdown');
@@ -405,8 +407,8 @@ const Lesson: React.FC = () => {
 
   if (!lessonData) {
     return (
-      <div className="min-h-screen bg-gray-800 p-8">
-        <div className="max-w-2xl mx-auto bg-gray-800 rounded-xl shadow-lg p-6">
+      <div className="min-h-screen bg-[#f3e0b7] p-8">
+        <div className="max-w-2xl mx-auto bg-[#f3e0b7] rounded-xl shadow-lg p-6">
           <div className="text-center">
             <p className="text-gray-300">Loading lesson...</p>
           </div>
@@ -417,8 +419,8 @@ const Lesson: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-800 p-8">
-        <div className="max-w-2xl mx-auto bg-gray-800 rounded-xl shadow-lg p-6">
+      <div className="min-h-screen bg-[#f3e0b7] p-8">
+        <div className="max-w-2xl mx-auto bg-[#f3e0b7] rounded-xl shadow-lg p-6">
           <div className="text-center">
             <h2 className="text-xl font-bold text-red-600 mb-4">Error</h2>
             <p className="text-gray-300 mb-4">{error}</p>
@@ -435,15 +437,15 @@ const Lesson: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-800 p-8">
-      <div className="max-w-2xl mx-auto bg-gray-800 rounded-xl shadow-lg p-6">
+    <div className="min-h-screen bg-[#f3e0b7] p-8">
+      <div className="max-w-2xl mx-auto bg-[#e6d0a8] rounded-xl shadow-lg p-6 border-4 border-dashed border-[#17475c]">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-black">
             Unit {unitId} · Level {levelId}
           </h1>
           <button
             onClick={handleBack}
-            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            className="w-10 h-10 flex items-center justify-center text-black hover:text-gray-700 transition-colors text-2xl"
           >
             ✕
           </button>
@@ -463,10 +465,10 @@ const Lesson: React.FC = () => {
               </span>
             </div>
 
-            <p className="text-xl text-white mb-8">{lessonData.prompt}</p>
+            <p className="text-xl text-black mb-8">{lessonData.prompt}</p>
 
             <div className="mb-8 p-4 bg-gray-700 rounded-lg">
-              <h3 className="font-medium text-white mb-3">Requirements:</h3>
+              <h3 className="font-medium text-[#e15831] mb-3">Requirements:</h3>
               <div className="space-y-2">
                 {lessonData.requirements.fillerWords && (
                   <div className={`flex items-center justify-between ${
@@ -543,7 +545,7 @@ const Lesson: React.FC = () => {
               </div>
             </div>
 
-            {hearts === 0 ? (
+            {showNoHeartsPopup ? (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full mx-4 border-2 border-gray-700">
                   <h2 className="text-2xl font-bold text-white mb-4">No Hearts Left</h2>
@@ -554,7 +556,10 @@ const Lesson: React.FC = () => {
                       {timeUntilRegeneration ? formatTime(timeUntilRegeneration) : '00:00:00'}
                     </p>
                     <button
-                      onClick={handleBack}
+                      onClick={() => {
+                        setShowNoHeartsPopup(false);
+                        handleBack();
+                      }}
                       className="px-6 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors"
                     >
                       Return to Dashboard

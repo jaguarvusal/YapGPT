@@ -7,9 +7,8 @@ const Sidebar: React.FC = () => {
     <>
       {/* Logo */}
       <div className="mt-1">
-        <div className="flex items-center space-x-2">
-          <span className="text-5xl">🦓</span>
-          <span className="text-2xl font-bold tracking-wider text-purple-500">YapGPT</span>
+        <div className="flex items-center justify-center">
+          <img src="/src/assets 2/logo.png" alt="YapGPT Logo" className="w-40 h-40" />
         </div>
       </div>
 
@@ -18,68 +17,100 @@ const Sidebar: React.FC = () => {
         <div className="flex flex-col w-full">
           <div className="mb-4 w-full">
             <button 
-              className={`w-[90%] rounded-xl transition-all duration-150 ${
+              className={`w-[90%] rounded-xl transition-all duration-150 group ${
                 selectedButton === 'yap' 
-                  ? 'bg-gray-700 border-2 border-purple-500' 
-                  : 'hover:bg-gray-700'
+                  ? 'bg-[#f3e0b7] border-2 border-[#e15831]' 
+                  : ''
               }`}
               aria-label="Yap"
               onClick={() => setSelectedButton('yap')}
             >
-              <div className="flex items-center space-x-4 text-2xl px-2 py-3">
-                <span className="w-8">🗣️</span>
-                <span className={`text-sm font-medium ${selectedButton === 'yap' ? 'text-purple-500' : 'text-white'}`}>YAP</span>
+              <div className={`flex items-center space-x-4 text-2xl px-2 py-3 rounded-xl ${
+                selectedButton !== 'yap' ? 'group-hover:bg-[#f3e0b7]' : ''
+              }`}>
+                <span className="w-16 h-16">
+                  <img src="/src/assets 2/yap.png" alt="Yap" className="w-full h-full object-contain" />
+                </span>
+                <span className={`text-sm font-medium ${
+                  selectedButton === 'yap' 
+                    ? 'text-[#e15831]' 
+                    : 'text-white group-hover:text-[#17475c]'
+                }`}>YAP</span>
               </div>
             </button>
           </div>
           
           <div className="mb-4 w-full">
             <button 
-              className={`w-[90%] rounded-xl transition-all duration-150 ${
+              className={`w-[90%] rounded-xl transition-all duration-150 group ${
                 selectedButton === 'leaderboard' 
-                  ? 'bg-gray-700 border-2 border-purple-500' 
-                  : 'hover:bg-gray-700'
+                  ? 'bg-[#f3e0b7] border-2 border-[#e15831]' 
+                  : ''
               }`}
               aria-label="Leaderboard"
               onClick={() => setSelectedButton('leaderboard')}
             >
-              <div className="flex items-center space-x-4 text-2xl px-2 py-3">
-                <span className="w-8">🏆</span>
-                <span className={`text-sm font-medium ${selectedButton === 'leaderboard' ? 'text-purple-500' : 'text-white'}`}>LEADERBOARD</span>
+              <div className={`flex items-center space-x-4 text-2xl px-2 py-3 rounded-xl ${
+                selectedButton !== 'leaderboard' ? 'group-hover:bg-[#f3e0b7]' : ''
+              }`}>
+                <span className="w-16 h-16">
+                  <img src="/src/assets 2/leaderboards.png" alt="Leaderboard" className="w-full h-full object-contain" />
+                </span>
+                <span className={`text-sm font-medium ${
+                  selectedButton === 'leaderboard' 
+                    ? 'text-[#e15831]' 
+                    : 'text-white group-hover:text-[#17475c]'
+                }`}>LEADERBOARD</span>
               </div>
             </button>
           </div>
           
           <div className="mb-4 w-full">
             <button 
-              className={`w-[90%] rounded-xl transition-all duration-150 ${
+              className={`w-[90%] rounded-xl transition-all duration-150 group ${
                 selectedButton === 'flirt' 
-                  ? 'bg-gray-700 border-2 border-purple-500' 
-                  : 'hover:bg-gray-700'
+                  ? 'bg-[#f3e0b7] border-2 border-[#e15831]' 
+                  : ''
               }`}
               aria-label="Flirt"
               onClick={() => setSelectedButton('flirt')}
             >
-              <div className="flex items-center space-x-4 text-2xl px-2 py-3">
-                <span className="w-8">💖</span>
-                <span className={`text-sm font-medium ${selectedButton === 'flirt' ? 'text-purple-500' : 'text-white'}`}>FLIRT</span>
+              <div className={`flex items-center space-x-4 text-2xl px-2 py-3 rounded-xl ${
+                selectedButton !== 'flirt' ? 'group-hover:bg-[#f3e0b7]' : ''
+              }`}>
+                <span className="w-16 h-16">
+                  <img src="/src/assets 2/flirt.png" alt="Flirt" className="w-full h-full object-contain" />
+                </span>
+                <span className={`text-sm font-medium ${
+                  selectedButton === 'flirt' 
+                    ? 'text-[#e15831]' 
+                    : 'text-white group-hover:text-[#17475c]'
+                }`}>FLIRT</span>
               </div>
             </button>
           </div>
           
           <div className="w-full">
             <button 
-              className={`w-[90%] rounded-xl transition-all duration-150 ${
+              className={`w-[90%] rounded-xl transition-all duration-150 group ${
                 selectedButton === 'profile' 
-                  ? 'bg-gray-700 border-2 border-purple-500' 
-                  : 'hover:bg-gray-700'
+                  ? 'bg-[#f3e0b7] border-2 border-[#e15831]' 
+                  : ''
               }`}
               aria-label="Profile"
               onClick={() => setSelectedButton('profile')}
             >
-              <div className="flex items-center space-x-4 text-2xl px-2 py-3">
-                <span className="w-8">👤</span>
-                <span className={`text-sm font-medium ${selectedButton === 'profile' ? 'text-purple-500' : 'text-white'}`}>PROFILE</span>
+              <div className={`flex items-center space-x-4 text-2xl px-2 py-3 rounded-xl ${
+                selectedButton !== 'profile' ? 'group-hover:bg-[#f3e0b7]' : ''
+              }`}>
+                <span className="w-16 h-16">
+                  <img src="/src/assets 2/profile.png" alt="Profile" className="w-full h-full object-contain" />
+                </span>
+                <span className={`text-sm font-medium ${
+                  selectedButton === 'profile' 
+                    ? 'text-[#e15831]' 
+                    : 'text-white group-hover:text-[#17475c]'
+                }`}>PROFILE</span>
               </div>
             </button>
           </div>

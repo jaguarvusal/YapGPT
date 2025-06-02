@@ -63,8 +63,10 @@ const Dashboard: React.FC = () => {
       if (targetSection) {
         const rect = targetSection.getBoundingClientRect();
         const containerRect = scrollContainer.getBoundingClientRect();
-        scrollContainer.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop;
-        rightSidebar.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop;
+        // Add extra padding for all units to prevent header overlap
+        const extraPadding = 100;
+        scrollContainer.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop - extraPadding;
+        rightSidebar.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop - extraPadding;
       }
     }
     setIsInitialized(true);
@@ -286,7 +288,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-full">
+    <div className="flex-1 flex flex-col min-h-full bg-[#f3e0b7]">
       {/* Header Section */}
       <header className={`text-center rounded-xl p-6 shadow-lg sticky top-4 z-[2000] backdrop-blur-sm bg-opacity-80 mx-4 ${
         currentUnit === 1 ? 'bg-orange-600' 
@@ -308,7 +310,15 @@ const Dashboard: React.FC = () => {
         {/* Level Bubbles */}
         <div className="flex flex-col items-center relative" onClick={(e) => e.stopPropagation()}>
           {[1, 2, 3, 4, 5].map((unit) => (
-            <div key={unit} className="py-20 flex flex-col items-center space-y-8" data-unit-section>
+            <div key={unit} className="pt-8 pb-4 flex flex-col items-center space-y-8" data-unit-section>
+              {/* Unit Header with Decorative Lines */}
+              <div className="w-[600px] flex items-center justify-center my-2">
+                <div className="w-[250px] h-[3px] bg-[#17475c]"></div>
+                <h2 className="px-8 text-xl font-extrabold text-[#17475c] whitespace-nowrap">
+                  {unitNames[unit - 1]}
+                </h2>
+                <div className="w-[250px] h-[3px] bg-[#17475c]"></div>
+              </div>
               {levels
                 .filter(level => Math.ceil(level / 5) === unit)
                 .map((level) => {
@@ -372,6 +382,16 @@ const Dashboard: React.FC = () => {
                       data-bubble
                     >
                       <div className="relative flex flex-col items-center">
+                        {/* Add unit images */}
+                        {level % 5 === 3 && (
+                          <div className={`absolute ${unit % 2 === 1 ? '-left-96' : '-right-96'} top-1/2 -translate-y-1/2 w-72 h-72`}>
+                            <img 
+                              src={`/src/assets 2/${unit === 1 ? 'chef' : unit === 2 ? 'boxer' : unit === 3 ? 'driver' : unit === 4 ? 'bodyguard' : 'wizard'}.png`} 
+                              alt={`Unit ${unit} character`}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
                         {activeLevel === level && !showLessonTooltip && (
                           <div className="animate-bounce-slow mb-1 z-50 absolute -top-12">
                             <div className="relative">

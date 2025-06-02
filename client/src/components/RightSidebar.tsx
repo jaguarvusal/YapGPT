@@ -28,6 +28,25 @@ const RightSidebar: React.FC = () => {
   const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
 
+  const scrollToForm = () => {
+    const formElement = document.getElementById('auth-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleShowSignup = () => {
+    setShowSignup(true);
+    setShowLogin(false);
+    setTimeout(scrollToForm, 100); // Small delay to ensure the form is rendered
+  };
+
+  const handleShowLogin = () => {
+    setShowLogin(true);
+    setShowSignup(false);
+    setTimeout(scrollToForm, 100); // Small delay to ensure the form is rendered
+  };
+
   useEffect(() => {
     const password = formState.password;
     const newCriteria = {
@@ -118,34 +137,33 @@ const RightSidebar: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col space-y-6">
-      <div className="bg-gray-700 rounded-xl p-4">
-        <h2 className="text-lg font-semibold text-white mb-2">Lives</h2>
-        <Hearts />
-      </div>
-      {/* Stats Section */}
-      <div className="sticky top-0 bg-gray-800 pt-4 pb-2 z-20">
-        {/* Login Streak and Health Status */}
-        <div className="flex items-center justify-center space-x-8">
-          <div className="group relative">
-            <div className="flex items-center p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 cursor-pointer">
+    <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-4">
+        <div className="bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl p-4 shadow-lg border-4 border-[#17475c]">
+          <h2 className="text-lg font-semibold text-black mb-2">Lives</h2>
+          <div className="flex justify-center">
+            <Hearts />
+          </div>
+        </div>
+        <div className="bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl p-4 pb-0 shadow-lg border-4 border-[#17475c]">
+          <h2 className="text-lg font-semibold text-black mb-2">Streak</h2>
+          <div className="flex justify-center">
+            <div className="flex items-center space-x-4">
               <StreakIcon className="text-orange-500" />
-              <span className="text-lg font-semibold ml-2 text-orange-500">{streak}</span>
-            </div>
-            {/* Tooltip */}
-            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg p-4 hidden group-hover:block z-50 border-2 border-gray-600">
-              {/* Caret */}
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-gray-800 transform rotate-45 border-t-2 border-l-2 border-gray-600"></div>
-              <p className="text-white text-sm">
-                You've logged in for {streak} day{streak !== 1 ? 's' : ''} in a row! Keep up the great work!
-              </p>
+              <span className="text-6xl font-semibold text-orange-500 -mt-32 -ml-12">{streak}</span>
             </div>
           </div>
         </div>
       </div>
+      {/* Stats Section */}
+      <div className="sticky top-0 bg-[#f3e0b7]/80 backdrop-blur-md pt-4 pb-2 z-20">
+        {/* Health Status */}
+        <div className="flex items-center justify-center space-x-8">
+        </div>
+      </div>
 
       {/* Profile Card */}
-      <div className="mt-2 bg-gray-800 rounded-xl shadow-md p-4 max-w-[350px] border-2 border-gray-600">
+      <div className="mt-0 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 max-w-[350px] border-4 border-dashed border-[#17475c]">
         {Auth.loggedIn() ? (
           <>
             <h2 className="text-lg font-semibold mb-2 text-white">
@@ -169,25 +187,19 @@ const RightSidebar: React.FC = () => {
           </>
         ) : (
           <>
-            <h2 className="text-lg font-semibold mb-6 text-white">
+            <h2 className="text-lg font-semibold mb-6 text-black">
               Create a profile to save your progress!
             </h2>
             <div className="space-y-3">
               <button 
-                onClick={() => {
-                  setShowSignup(true);
-                  setShowLogin(false);
-                }}
-                className="block w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-all duration-150 text-center border-b-4 border-purple-600 active:translate-y-1 active:border-b-0 uppercase font-medium"
+                onClick={handleShowSignup}
+                className="block w-full bg-[#17475c] text-white py-2 px-4 rounded-lg hover:bg-[#1a5266] transition-all duration-150 text-center border-b-4 border-[#123a4c] active:translate-y-1 active:border-b-0 uppercase font-medium"
               >
                 Sign Up
               </button>
               <button 
-                onClick={() => {
-                  setShowLogin(true);
-                  setShowSignup(false);
-                }}
-                className="block w-full bg-white text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-100 transition-all duration-150 text-center border-b-4 border-gray-200 active:translate-y-1 active:border-b-0 uppercase font-medium"
+                onClick={handleShowLogin}
+                className="block w-full bg-[#e15831] text-white py-2 px-4 rounded-lg hover:bg-[#c94d2b] transition-all duration-150 text-center border-b-4 border-[#b34426] active:translate-y-1 active:border-b-0 uppercase font-medium"
               >
                 Log In
               </button>
@@ -198,8 +210,8 @@ const RightSidebar: React.FC = () => {
 
       {/* Signup Card */}
       {showSignup && (
-        <div className="mt-4 bg-gray-800 rounded-xl shadow-md p-4 max-w-[350px] border-2 border-gray-600 animate-fadeIn">
-          <h2 className="text-lg font-semibold mb-6 text-white">Create a Profile</h2>
+        <div id="auth-form" className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 max-w-[350px] border-4 border-dashed border-[#17475c] animate-fadeIn">
+          <h2 className="text-lg font-semibold mb-6 text-black">Create a Profile</h2>
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
               <input
@@ -283,8 +295,8 @@ const RightSidebar: React.FC = () => {
 
       {/* Login Card */}
       {showLogin && (
-        <div className="mt-4 bg-gray-800 rounded-xl shadow-md p-4 max-w-[350px] border-2 border-gray-600 animate-fadeIn">
-          <h2 className="text-lg font-semibold mb-6 text-white">Log In</h2>
+        <div id="auth-form" className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 max-w-[350px] border-4 border-dashed border-[#17475c] animate-fadeIn">
+          <h2 className="text-lg font-semibold mb-6 text-black">Log In</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <input

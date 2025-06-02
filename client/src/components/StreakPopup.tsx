@@ -24,15 +24,15 @@ const StreakPopup: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full mx-4 border-2 border-gray-700">
+      <div className="bg-[#f3e0b7] p-8 rounded-xl shadow-lg max-w-md w-full mx-4 border-2 border-[#17475c]">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
             <StreakIcon className="w-16 h-16 text-orange-500" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">
+          <h2 className="text-3xl font-bold text-black mb-2">
             {streak} Day{streak !== 1 ? 's' : ''} Streak!
           </h2>
-          <p className="text-xl text-gray-300 mb-6">{message}</p>
+          <p className="text-xl text-gray-700 mb-6">{message}</p>
           <button
             onClick={() => setShowStreakPopup(false)}
             className="px-6 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors"
