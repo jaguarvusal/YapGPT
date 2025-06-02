@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
+import Hearts from './Hearts';
+import { useStreak } from '../contexts/StreakContext';
+import StreakIcon from './StreakIcon';
 
 const RightSidebar: React.FC = () => {
+  const { streak } = useStreak();
   const [showSignup, setShowSignup] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPasswordTooltip, setShowPasswordTooltip] = useState(false);
   const [formState, setFormState] = useState({
     name: '',
@@ -74,7 +77,6 @@ const RightSidebar: React.FC = () => {
         setPasswordError('');
         setShowPasswordTooltip(false);
         setShowPassword(false);
-        setIsPasswordFocused(false);
         
         // Then login and hide signup form
         Auth.login(data.addYapper.token);
@@ -116,64 +118,27 @@ const RightSidebar: React.FC = () => {
   };
 
   return (
-    <>
+    <div className="flex flex-col space-y-6">
+      <div className="bg-gray-700 rounded-xl p-4">
+        <h2 className="text-lg font-semibold text-white mb-2">Lives</h2>
+        <Hearts />
+      </div>
       {/* Stats Section */}
       <div className="sticky top-0 bg-gray-800 pt-4 pb-2 z-20">
         {/* Login Streak and Health Status */}
         <div className="flex items-center justify-center space-x-8">
           <div className="group relative">
             <div className="flex items-center p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 cursor-pointer">
-              <span className="text-3xl">🔥</span>
-              <span className="text-lg font-semibold ml-2 text-orange-500">1</span>
+              <StreakIcon className="text-orange-500" />
+              <span className="text-lg font-semibold ml-2 text-orange-500">{streak}</span>
             </div>
             {/* Tooltip */}
             <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg p-4 hidden group-hover:block z-50 border-2 border-gray-600">
               {/* Caret */}
               <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-gray-800 transform rotate-45 border-t-2 border-l-2 border-gray-600"></div>
-              <div className="relative">
-                <div className="text-center mb-3">
-                  <p className="font-semibold text-white">1 day streak</p>
-                  <p className="text-sm text-gray-300 mt-1">Play a level today to start a new streak!</p>
-                </div>
-                {/* Weekly Calendar */}
-                <div className="mt-4">
-                  <div className="flex justify-between mb-2">
-                    {['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'].map((day) => (
-                      <span key={day} className="text-xs text-gray-400 w-6 text-center">{day}</span>
-                    ))}
-                  </div>
-                  <div className="flex justify-between">
-                    {[true, false, false, false, false, false, false].map((isStreak, index) => (
-                      <div 
-                        key={index}
-                        className={`w-6 h-6 rounded-full ${isStreak ? 'bg-blue-500' : 'bg-gray-700'}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="group relative">
-            <div className="flex items-center p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 cursor-pointer">
-              <span className="text-3xl">❤️</span>
-              <span className="text-lg font-semibold ml-2 text-red-500">3</span>
-            </div>
-            {/* Tooltip */}
-            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-800 rounded-lg shadow-lg p-4 hidden group-hover:block z-50 border-2 border-gray-600">
-              {/* Caret */}
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-gray-800 transform rotate-45 border-t-2 border-l-2 border-gray-600"></div>
-              <div className="relative">
-                <div className="text-center mb-3">
-                  <p className="font-semibold text-white">Hearts</p>
-                  <div className="flex justify-center space-x-1 mt-2">
-                    {[1, 2, 3, 4, 5].map((heart) => (
-                      <span key={heart} className="text-2xl">❤️</span>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-300 mt-2">Keep on improving!</p>
-                </div>
-              </div>
+              <p className="text-white text-sm">
+                You've logged in for {streak} day{streak !== 1 ? 's' : ''} in a row! Keep up the great work!
+              </p>
             </div>
           </div>
         </div>
@@ -264,13 +229,11 @@ const RightSidebar: React.FC = () => {
                 value={formState.password}
                 onChange={handleChange}
                 onFocus={() => {
-                  setIsPasswordFocused(true);
                   setShowPasswordTooltip(true);
                 }}
                 onBlur={(e) => {
                   // Only hide tooltip if we're not clicking the submit button
                   if (!e.relatedTarget?.closest('button[type="submit"]')) {
-                    setIsPasswordFocused(false);
                     setShowPasswordTooltip(false);
                   }
                 }}
@@ -366,7 +329,7 @@ const RightSidebar: React.FC = () => {
           </form>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

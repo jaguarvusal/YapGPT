@@ -282,7 +282,7 @@ export const lessonsData: LessonsData = {
             "grammarScore": { "min": 85 },
             "wordChoiceScore": { "min": 70 },
             "concisenessScore": { "min": 60 },
-            "charismaScore": { "min": 1 }
+            "charismaScore": { "min": 4 }
           }
         },
         {
@@ -295,7 +295,7 @@ export const lessonsData: LessonsData = {
             "grammarScore": { "min": 88 },
             "wordChoiceScore": { "min": 75 },
             "concisenessScore": { "min": 70 },
-            "charismaScore": { "min": 4 }
+            "charismaScore": { "min": 6 }
           }
         },
         {
@@ -308,7 +308,7 @@ export const lessonsData: LessonsData = {
             "grammarScore": { "min": 90 },
             "wordChoiceScore": { "min": 78 },
             "concisenessScore": { "min": 75 },
-            "charismaScore": { "min": 6 }
+            "charismaScore": { "min": 7 }
           }
         },
         {
@@ -334,7 +334,7 @@ export const lessonsData: LessonsData = {
             "grammarScore": { "min": 94 },
             "wordChoiceScore": { "min": 85 },
             "concisenessScore": { "min": 90 },
-            "charismaScore": { "min": 10 }
+            "charismaScore": { "min": 9 }
           }
         }
       ]
@@ -346,5 +346,8 @@ export const lessonsData: LessonsData = {
 export const findLesson = (unitId: number, levelId: number): Lesson | undefined => {
   const unit = lessonsData.units.find(u => u.unit === unitId);
   if (!unit) return undefined;
-  return unit.lessons.find(l => l.level === levelId);
+  
+  // Convert absolute level to unit-relative level (1-5)
+  const levelInUnit = ((levelId - 1) % 5) + 1;
+  return unit.lessons.find(l => l.level === levelInUnit);
 }; 

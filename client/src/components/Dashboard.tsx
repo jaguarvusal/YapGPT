@@ -18,16 +18,16 @@ const unitTaglines = [
 ];
 
 const lessonNames = [
-  // Unit 1
-  ['The "Um" Epidemic', 'Spot the Crutch', 'Clean Start', 'Fill the Silence', 'Zero-Filler Mission'],
-  // Unit 2
-  ['Ramble Mode Off', 'Main Point First', 'Trim the Fat', 'Think Then Speak', 'Elevator Pitch Master'],
-  // Unit 3
-  ['Speed Check', 'Slow is Smooth', 'Pause for Power', 'No Filler, Just Flow', 'Mic Drop Timing'],
-  // Unit 4
-  ['Voice Check', 'Power Phrases', 'No Shrinking Words', 'Volume & Variance', 'Command the Room'],
-  // Unit 5
-  ['The Smile Effect', 'Story Mode On', 'Flirt Without Cringe', 'Vibe Control', 'Speak to Be Remembered']
+  // Unit 1 - Filler Words
+  ['Eliminate "Um"', 'Cut the "Like"', 'Remove "You Know"', 'Clear the "Actually"', 'Zero Filler Words'],
+  // Unit 2 - Grammar
+  ['Basic Structure', 'Complex Sentences', 'Perfect Tense', 'Advanced Grammar', 'Grammar Mastery'],
+  // Unit 3 - Word Choice
+  ['Simple & Clear', 'Rich Vocabulary', 'Precise Language', 'Powerful Words', 'Word Mastery'],
+  // Unit 4 - Conciseness
+  ['Brief & Clear', 'Trim Sentences', 'Essential Words', 'Concise Impact', 'Perfect Brevity'],
+  // Unit 5 - Charisma
+  ['Confident Start', 'Engaging Story', 'Charming Tone', 'Dynamic Delivery', 'Charisma Master']
 ];
 
 const Dashboard: React.FC = () => {
@@ -35,11 +35,8 @@ const Dashboard: React.FC = () => {
   // Generate array of 25 levels (5 levels per unit)
   const levels = Array.from({ length: 25 }, (_, i) => i + 1);
   const [currentUnit, setCurrentUnit] = useState(1);
-  const [activeLevel, setActiveLevel] = useState(() => {
-    // Initialize from localStorage or default to 1
-    const savedLevel = localStorage.getItem('activeLevel');
-    return savedLevel ? parseInt(savedLevel, 10) : 1;
-  });
+  const [activeLevel, setActiveLevel] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [showLessonTooltip, setShowLessonTooltip] = useState(false);
   const [showLockedTooltip, setShowLockedTooltip] = useState<number | null>(null);
   const [showPracticeTooltip, setShowPracticeTooltip] = useState<number | null>(null);
@@ -47,14 +44,106 @@ const Dashboard: React.FC = () => {
   const [showSkipConfirmation, setShowSkipConfirmation] = useState<{unit: number, level: number} | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Sync with localStorage on mount
+  useEffect(() => {
+    const savedLevel = localStorage.getItem('activeLevel');
+    if (savedLevel) {
+      const level = parseInt(savedLevel, 10);
+      setActiveLevel(level);
+      const unit = Math.ceil(level / 5);
+      setCurrentUnit(unit);
+
+      // Set initial scroll position to the current unit
+      const scrollContainer = document.getElementById('scroll-container');
+      const rightSidebar = document.getElementById('right-sidebar-scroll');
+      if (!scrollContainer || !rightSidebar) return;
+
+      const unitSections = scrollContainer.querySelectorAll('[data-unit-section]');
+      const targetSection = unitSections[unit - 1];
+      if (targetSection) {
+        const rect = targetSection.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        scrollContainer.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop;
+        rightSidebar.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop;
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Handle scroll events only after initialization
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const handleScroll = () => {
+      const scrollContainer = document.getElementById('scroll-container');
+      if (!scrollContainer) return;
+      
+      const unitSections = scrollContainer.querySelectorAll('[data-unit-section]');
+      let newUnit = 1;
+      
+      unitSections.forEach((section, index) => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= scrollContainer.getBoundingClientRect().top + 100) {
+          newUnit = index + 1;
+        }
+      });
+      
+      if (newUnit !== currentUnit && newUnit >= 1 && newUnit <= 5) {
+        setCurrentUnit(newUnit);
+      }
+    };
+
+    const scrollContainer = document.getElementById('scroll-container');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [currentUnit, isInitialized]);
+
+  // Add wheel event listener to handle scrolling regardless of mouse position
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      const scrollContainer = document.getElementById('scroll-container');
+      const rightSidebar = document.getElementById('right-sidebar-scroll');
+      if (!scrollContainer || !rightSidebar) return;
+
+      // Use a larger multiplier for faster scrolling
+      const scrollAmount = event.deltaY * 1.2;
+      
+      // Scroll both containers without smooth behavior for better performance
+      scrollContainer.scrollBy({
+        top: scrollAmount,
+        behavior: 'auto'
+      });
+      
+      rightSidebar.scrollBy({
+        top: scrollAmount,
+        behavior: 'auto'
+      });
+    };
+
+    // Add wheel event listener to the document
+    document.addEventListener('wheel', handleWheel, { passive: true });
+
+    return () => {
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
+  // Remove the initial scroll to correct unit effect
+  useEffect(() => {
+    if (!isInitialized) return;
+    setCurrentUnit(Math.ceil(activeLevel / 5));
+  }, [isInitialized, activeLevel]);
+
   // Helper function to get the actual level number within a unit (1-5)
   const getLevelInUnit = (level: number) => {
     return ((level - 1) % 5) + 1;
-  };
-
-  // Helper function to get the unit number for a level
-  const getUnitForLevel = (level: number) => {
-    return Math.ceil(level / 5);
   };
 
   useEffect(() => {
@@ -136,71 +225,6 @@ const Dashboard: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollContainer = document.getElementById('scroll-container');
-      if (!scrollContainer) return;
-      
-      // Get all unit sections
-      const unitSections = scrollContainer.querySelectorAll('[data-unit-section]');
-      
-      // Find which unit should be active based on visibility
-      let newUnit = 1;
-      unitSections.forEach((section, index) => {
-        const rect = section.getBoundingClientRect();
-        // If the section's top is above the container's top, it's the current unit
-        if (rect.top <= scrollContainer.getBoundingClientRect().top + 100) {
-          newUnit = index + 1;
-        }
-      });
-      
-      if (newUnit !== currentUnit && newUnit >= 1 && newUnit <= 5) {
-        setCurrentUnit(newUnit);
-      }
-    };
-
-    const scrollContainer = document.getElementById('scroll-container');
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-    }
-
-    return () => {
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, [currentUnit]);
-
-  // Add wheel event listener to handle scrolling regardless of mouse position
-  useEffect(() => {
-    const handleWheel = (event: WheelEvent) => {
-      const scrollContainer = document.getElementById('scroll-container');
-      const rightSidebar = document.getElementById('right-sidebar-scroll');
-      if (!scrollContainer || !rightSidebar) return;
-
-      // Reduce scroll speed by multiplying deltaY by 0.5
-      const scrollAmount = event.deltaY * 0.5;
-      
-      // Scroll both containers
-      scrollContainer.scrollBy({
-        top: scrollAmount,
-        behavior: 'auto'
-      });
-      
-      rightSidebar.scrollBy({
-        top: scrollAmount,
-        behavior: 'auto'
-      });
-    };
-
-    // Add wheel event listener to the document
-    document.addEventListener('wheel', handleWheel, { passive: true });
-
-    return () => {
-      document.removeEventListener('wheel', handleWheel);
-    };
-  }, []);
-
   // Add scroll sync effect
   useEffect(() => {
     const handleScroll = () => {
@@ -231,12 +255,12 @@ const Dashboard: React.FC = () => {
       setShowLockedTooltip(null);
       setShowPracticeTooltip(null);
       
-      // Get the actual level number within the unit (1-5)
-      const levelInUnit = getLevelInUnit(level);
+      // Calculate the absolute level number
+      const absoluteLevel = ((unit - 1) * 5) + level;
       
       // Navigate to the lesson page with string parameters
-      const path = `/unit/${unit.toString()}/lesson/${levelInUnit.toString()}`;
-      console.log('Navigating to:', path); // Debug log
+      const path = `/unit/${unit.toString()}/lesson/${level.toString()}`;
+      console.log('Navigating to:', path, 'Absolute level:', absoluteLevel); // Debug log
       navigate(path);
     } catch (error) {
       console.error('Navigation error:', error);
@@ -405,7 +429,7 @@ const Dashboard: React.FC = () => {
                             <div className="mb-1 z-[1001] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
                               <div className="relative">
                                 <div className="px-4 py-3 rounded-lg text-sm border-2 border-gray-600 min-w-[220px] bg-gray-800">
-                                  <p className="text-gray-300 font-semibold text-base">Filler Words</p>
+                                  <p className="text-gray-300 font-semibold text-base">{lessonNames[unit - 1][(level - 1) % 5]}</p>
                                   <p className="text-gray-400 text-xs mt-1.5">Complete all levels above to unlock this!</p>
                                   <div className="w-full mt-2 bg-gray-700 text-gray-400 py-1.5 px-3 rounded-lg text-center border-b-2 border-gray-600 text-sm font-medium">
                                     LOCKED
@@ -526,13 +550,13 @@ const Dashboard: React.FC = () => {
             <div className="flex space-x-4">
               <button
                 onClick={handleSkipCancel}
-                className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-150 text-center border-b-4 border-gray-800 active:translate-y-1 active:border-b-0 font-medium shadow-[0_4px_0_rgba(0,0,0,0.2)] active:shadow-none"
               >
                 NEVERMIND
               </button>
               <button
                 onClick={handleSkipConfirm}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-150 text-center border-b-4 border-red-800 active:translate-y-1 active:border-b-0 font-medium shadow-[0_4px_0_rgba(0,0,0,0.2)] active:shadow-none"
               >
                 CONFIRM
               </button>

@@ -9,6 +9,8 @@ import {
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
+import { HeartsProvider } from './contexts/HeartsContext';
+import { StreakProvider } from './contexts/StreakContext';
 
 import App from './App.jsx';
 import Dashboard from './components/Dashboard';
@@ -35,7 +37,7 @@ const authLink = setContext((_, { headers }) => {
 });
 
 // Add error handling link
-const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
+const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   if (graphQLErrors) {
     console.error('GraphQL Errors:', graphQLErrors);
     console.error('Operation:', operation);
@@ -104,7 +106,11 @@ const rootElement = document.getElementById('root');
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <ApolloProvider client={client}>
-      <RouterProvider router={router} />
+      <HeartsProvider>
+        <StreakProvider>
+          <RouterProvider router={router} />
+        </StreakProvider>
+      </HeartsProvider>
     </ApolloProvider>
   );
 }

@@ -126,6 +126,13 @@ const resolvers = {
       transcript: string;
       confidenceScore: number;
       fillerWordCount: number;
+      grammarScore: number;
+      wordChoiceScore: number;
+      conciseness: {
+        wordCount: number;
+        sentenceCount: number;
+      };
+      charismaScore: number;
       suggestions: string[];
     }> => {
       try {

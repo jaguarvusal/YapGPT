@@ -11,6 +11,7 @@ import { setContext } from '@apollo/client/link/context';
 
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar';
+import StreakPopup from './components/StreakPopup';
 
 const httpLink = createHttpLink({
   uri: 'http://localhost:3001/graphql',
@@ -59,6 +60,9 @@ const App: React.FC = () => {
             <RightSidebar />
           </div>
         </div>
+
+        {/* Streak Popup */}
+        <StreakPopup />
       </div>
     </ApolloProvider>
   );

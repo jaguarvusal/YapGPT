@@ -4,6 +4,13 @@ interface GPTAnalysis {
   transcript: string;
   fillerWordCount: number;
   confidenceScore: number;
+  grammarScore: number;
+  wordChoiceScore: number;
+  conciseness: {
+    wordCount: number;
+    sentenceCount: number;
+  };
+  charismaScore: number;
   suggestions: string[];
 }
 
@@ -25,6 +32,13 @@ IMPORTANT: You must respond with a valid JSON object in this exact format:
   "transcript": "the original transcript",
   "fillerWordCount": number,
   "confidenceScore": number between 0 and 1,
+  "grammarScore": number between 0 and 100,
+  "wordChoiceScore": number between 0 and 100,
+  "conciseness": {
+    "wordCount": number,
+    "sentenceCount": number
+  },
+  "charismaScore": number between 0 and 10,
   "suggestions": ["suggestion1", "suggestion2", "suggestion3"]
 }
 
@@ -79,6 +93,33 @@ SPECIFIC WORD RULES:
    - FILLER: "I mean, like..." (at start)
    - NOT FILLER: "I think we should go" (expressing opinion)
 
+For grammar score (0-100):
+- Check for proper sentence structure
+- Verify subject-verb agreement
+- Look for correct tense usage
+- Check for proper punctuation
+- Consider sentence complexity and variety
+- Score based on overall grammatical correctness
+
+For word choice score (0-100):
+- Evaluate vocabulary diversity
+- Check for appropriate word usage
+- Consider precision and clarity
+- Look for natural language flow
+- Score based on overall word choice quality
+
+For conciseness:
+- Count total words
+- Count number of sentences
+- Consider sentence length and complexity
+
+For charisma score (0-10):
+- Evaluate engagement level
+- Check for natural flow
+- Consider emotional impact
+- Look for personal connection
+- Score based on overall charisma
+
 For confidence score:
 - Score between 0 (low) and 1 (high)
 - Consider clarity, pace, and filler word usage
@@ -100,7 +141,7 @@ DO NOT include any text outside the JSON object. The response must be valid JSON
             content: transcript
           }
         ],
-        temperature: 0.3 // Lower temperature for more consistent counting
+        temperature: 0.3
       },
       {
         headers: {
@@ -112,18 +153,23 @@ DO NOT include any text outside the JSON object. The response must be valid JSON
 
     console.log('Received GPT response:', response.data);
     
-    // Get the content from the response
     const content = response.data.choices[0].message.content;
     console.log('Raw GPT content:', content);
     
     try {
-      // Parse the response content as JSON
       const analysis = JSON.parse(content);
       console.log('Parsed analysis:', analysis);
       
-      // Validate the required fields
-      if (!analysis.transcript || typeof analysis.fillerWordCount !== 'number' || 
-          typeof analysis.confidenceScore !== 'number' || !Array.isArray(analysis.suggestions)) {
+      if (!analysis.transcript || 
+          typeof analysis.fillerWordCount !== 'number' || 
+          typeof analysis.confidenceScore !== 'number' || 
+          !Array.isArray(analysis.suggestions) ||
+          typeof analysis.grammarScore !== 'number' || 
+          typeof analysis.wordChoiceScore !== 'number' ||
+          !analysis.conciseness || 
+          typeof analysis.conciseness.wordCount !== 'number' ||
+          typeof analysis.conciseness.sentenceCount !== 'number' ||
+          typeof analysis.charismaScore !== 'number') {
         throw new Error('Invalid analysis format');
       }
       

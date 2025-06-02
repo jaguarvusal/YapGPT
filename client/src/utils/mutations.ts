@@ -40,6 +40,13 @@ export const UPLOAD_AUDIO = gql`
       transcript
       confidenceScore
       fillerWordCount
+      grammarScore
+      wordChoiceScore
+      conciseness {
+        wordCount
+        sentenceCount
+      }
+      charismaScore
       suggestions
     }
   }

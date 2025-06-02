@@ -27,7 +27,16 @@ const typeDefs = `
     transcript: String!
     confidenceScore: Float!
     fillerWordCount: Int!
+    grammarScore: Float!
+    wordChoiceScore: Float!
+    conciseness: Conciseness!
+    charismaScore: Float!
     suggestions: [String]!
+  }
+
+  type Conciseness {
+    wordCount: Int!
+    sentenceCount: Int!
   }
 
   type Query {

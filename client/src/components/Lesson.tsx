@@ -4,6 +4,7 @@ import { useMutation } from '@apollo/client';
 import { UPLOAD_AUDIO } from '../utils/mutations';
 import { findLesson } from '../data/lessons';
 import type { Lesson } from '../data/lessons';
+import { useHearts } from '../contexts/HeartsContext';
 
 interface LessonParams {
   unitId: string;
@@ -48,6 +49,7 @@ const modeEmojis: Record<string, string> = {
 const Lesson: React.FC = () => {
   const { unitId, levelId } = useParams<LessonParams>();
   const navigate = useNavigate();
+  const { loseHeart, hearts, timeUntilRegeneration } = useHearts();
   
   const [lessonData, setLessonData] = useState<Lesson | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -98,7 +100,17 @@ const Lesson: React.FC = () => {
     };
   }, []);
 
+  const formatTime = (ms: number) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   const startCountdown = useCallback(() => {
+    if (hearts === 0) {
+      return; // Don't start if no hearts left
+    }
     setStatus('countdown');
     setCountdown(3);
     
@@ -112,7 +124,7 @@ const Lesson: React.FC = () => {
         return prev - 1;
       });
     }, 1000);
-  }, []);
+  }, [hearts]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -203,12 +215,12 @@ const Lesson: React.FC = () => {
                   };
                 }
                 
-                if (currentLessonData?.requirements.conciseness) {
+                if (currentLessonData?.requirements.conciseness || currentLessonData?.requirements.concisenessScore) {
                   statuses.conciseness = {
-                    met: data.uploadAudio.conciseness.wordCount <= (currentLessonData.requirements.conciseness.maxWords || Infinity) &&
-                         data.uploadAudio.conciseness.sentenceCount <= (currentLessonData.requirements.conciseness.maxSentences || Infinity),
+                    met: data.uploadAudio.conciseness.wordCount <= (currentLessonData.requirements.conciseness?.maxWords || 60) &&
+                         data.uploadAudio.conciseness.sentenceCount <= (currentLessonData.requirements.conciseness?.maxSentences || Infinity),
                     value: data.uploadAudio.conciseness.wordCount,
-                    target: currentLessonData.requirements.conciseness.maxWords || 0,
+                    target: currentLessonData.requirements.conciseness?.maxWords || 0,
                     type: 'max'
                   };
                 }
@@ -278,7 +290,6 @@ const Lesson: React.FC = () => {
   useEffect(() => {
     if (allRequirementsMet) {
       const currentLevel = Number(levelId);
-      const currentUnit = Number(unitId);
       const activeLevel = Number(localStorage.getItem('activeLevel') || '1');
       
       // Only update active level if this is the current active level or a future level
@@ -296,7 +307,7 @@ const Lesson: React.FC = () => {
         }
       }
     }
-  }, [allRequirementsMet, levelId, unitId]);
+  }, [allRequirementsMet, levelId]);
 
   // Update the feedback handling to set allRequirementsMet
   useEffect(() => {
@@ -304,12 +315,18 @@ const Lesson: React.FC = () => {
       const requirementsMet = Object.keys(requirementStatuses).length > 0 && 
         Object.values(requirementStatuses).every(status => status.met);
       setAllRequirementsMet(requirementsMet);
+      
+      // Call handleSubmit when requirements are not met
+      if (!requirementsMet) {
+        handleSubmit();
+      }
     }
   }, [feedback, requirementStatuses]);
 
   const handleNextLevel = () => {
     const nextLevel = Number(levelId) + 1;
     const currentUnit = Number(unitId);
+    const activeLevel = Number(localStorage.getItem('activeLevel') || '1');
     
     // Reset all state before navigation
     setTranscript('');
@@ -325,11 +342,38 @@ const Lesson: React.FC = () => {
     if (nextLesson) {
       // If next level exists in current unit, navigate to it
       console.log('Navigating to next level:', nextLevel);
+      
+      // Only update active level if this is the current active level or a future level
+      if (Number(levelId) >= activeLevel) {
+        localStorage.setItem('activeLevel', nextLevel.toString());
+        
+        // Dispatch level completed event
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('levelCompleted', {
+            detail: { nextLevel }
+          }));
+        }
+      }
+      
       navigate(`/unit/${currentUnit}/lesson/${nextLevel}`, { replace: true });
     } else if (currentUnit < 5) {
       // If no more levels in current unit but there are more units, go to first level of next unit
-      console.log('Navigating to next unit:', currentUnit + 1);
-      navigate(`/unit/${currentUnit + 1}/lesson/1`, { replace: true });
+      const nextUnit = currentUnit + 1;
+      console.log('Navigating to next unit:', nextUnit);
+      
+      // Only update active level if this is the current active level or a future level
+      if (Number(levelId) >= activeLevel) {
+        localStorage.setItem('activeLevel', '1');
+        
+        // Dispatch level completed event for unit transition
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('levelCompleted', {
+            detail: { nextLevel: 1 }
+          }));
+        }
+      }
+      
+      navigate(`/unit/${nextUnit}/lesson/1`, { replace: true });
     } else {
       // If no more levels or units, go back to dashboard
       console.log('Navigating to dashboard');
@@ -347,6 +391,16 @@ const Lesson: React.FC = () => {
 
   const handleBack = () => {
     navigate('/');
+  };
+
+  const handleSubmit = async () => {
+    // Check if any requirements are not met
+    const hasFailedRequirements = Object.values(requirementStatuses).some(status => !status.met);
+    if (hasFailedRequirements) {
+      loseHeart();
+    }
+
+    // ... rest of the submit logic ...
   };
 
   if (!lessonData) {
@@ -446,35 +500,11 @@ const Lesson: React.FC = () => {
                         ? 'text-red-500' 
                         : 'text-green-500'
                   }`}>
-                    <span className="text-gray-300">Word Choice Score</span>
-                    <span className="text-white">At least {lessonData.requirements.wordChoiceScore.min}%</span>
+                    <span>Word Choice Score</span>
+                    <span>At least {lessonData.requirements.wordChoiceScore.min}%</span>
                   </div>
                 )}
-                {lessonData.requirements.concisenessScore && (
-                  <div className={`flex items-center justify-between ${
-                    !feedback 
-                      ? 'text-white' 
-                      : !requirementStatuses.concisenessScore?.met 
-                        ? 'text-red-500' 
-                        : 'text-green-500'
-                  }`}>
-                    <span className="text-gray-300">Conciseness Score</span>
-                    <span className="text-white">At least {lessonData.requirements.concisenessScore.min}%</span>
-                  </div>
-                )}
-                {lessonData.requirements.charismaScore && (
-                  <div className={`flex items-center justify-between ${
-                    !feedback 
-                      ? 'text-white' 
-                      : !requirementStatuses.charismaScore?.met 
-                        ? 'text-red-500' 
-                        : 'text-green-500'
-                  }`}>
-                    <span className="text-gray-300">Charisma Score</span>
-                    <span className="text-white">At least {lessonData.requirements.charismaScore.min} out of 10</span>
-                  </div>
-                )}
-                {lessonData.requirements.conciseness?.maxWords && (
+                {(lessonData.requirements.conciseness || lessonData.requirements.concisenessScore) && (
                   <div className={`flex items-center justify-between ${
                     !feedback 
                       ? 'text-white' 
@@ -482,8 +512,8 @@ const Lesson: React.FC = () => {
                         ? 'text-red-500' 
                         : 'text-green-500'
                   }`}>
-                    <span className="text-gray-300">Maximum Words</span>
-                    <span className="text-white">No more than {lessonData.requirements.conciseness.maxWords}</span>
+                    <span>Conciseness</span>
+                    <span>Maximum {lessonData.requirements.conciseness?.maxWords || 60} words</span>
                   </div>
                 )}
                 {lessonData.requirements.conciseness?.maxSentences && (
@@ -494,176 +524,256 @@ const Lesson: React.FC = () => {
                         ? 'text-red-500' 
                         : 'text-green-500'
                   }`}>
-                    <span className="text-gray-300">Maximum Sentences</span>
-                    <span className="text-white">No more than {lessonData.requirements.conciseness.maxSentences}</span>
+                    <span>Maximum Sentences</span>
+                    <span>No more than {lessonData.requirements.conciseness.maxSentences}</span>
+                  </div>
+                )}
+                {lessonData.requirements.charismaScore && (
+                  <div className={`flex items-center justify-between ${
+                    !feedback 
+                      ? 'text-white' 
+                      : !requirementStatuses.charismaScore?.met 
+                        ? 'text-red-500' 
+                        : 'text-green-500'
+                  }`}>
+                    <span>Charisma Score</span>
+                    <span>At least {lessonData.requirements.charismaScore.min} out of 10</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {status === 'countdown' && (
-              <div className="text-6xl font-bold text-white mb-8">
-                {countdown}
-              </div>
-            )}
-
-            {status === 'recording' && (
-              <div className="mb-8">
-                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-500 transition-all duration-100"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <p className="text-white mt-2">Recording in progress...</p>
-                <button
-                  onClick={stopRecording}
-                  className="mt-4 px-6 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
-                >
-                  Stop Recording
-                </button>
-              </div>
-            )}
-
-            {(status === 'transcribing' || status === 'analyzing') && (
-              <div className="mb-8 space-y-4">
-                <div>
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500 to-transparent animate-scan" />
-                    <div className="absolute inset-0 bg-green-500/20" />
-                  </div>
-                  <p className="text-white mt-2">Transcribing your speech...</p>
-                </div>
-                <div>
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500 to-transparent animate-scan" />
-                    <div className="absolute inset-0 bg-purple-500/20" />
-                  </div>
-                  <p className="text-white mt-2">Analyzing your response...</p>
-                </div>
-              </div>
-            )}
-
-            {status === 'idle' && !feedback && (
-              <div className="flex justify-center space-x-4">
-                <button
-                  onClick={startCountdown}
-                  disabled={isRecording || uploadLoading}
-                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-150 uppercase tracking-wide ${
-                    isRecording || uploadLoading
-                      ? 'bg-gray-700 cursor-not-allowed text-gray-400'
-                      : 'bg-purple-500 hover:bg-purple-600 text-white border-b-4 border-purple-700 active:translate-y-1 active:border-b-0'
-                  }`}
-                >
-                  Record
-                </button>
-              </div>
-            )}
-
-            {transcript && (
-              <div className="mt-4 p-4 bg-gray-700 rounded-lg">
-                <h3 className="font-medium mb-2 text-white">Transcript:</h3>
-                <p className="text-gray-300">{transcript}</p>
-              </div>
-            )}
-
-            {feedback && (
-              <div className="mt-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-700 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-white">Confidence Score</h3>
-                      <span className={`text-2xl ${feedback.confidenceScore >= 0.8 ? 'text-green-500' : 'text-yellow-500'}`}>
-                        {Math.round(feedback.confidenceScore * 100)}%
-                      </span>
-                    </div>
-                    <p className="text-gray-300">
-                      How confident the system is in understanding your speech
+            {hearts === 0 ? (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full mx-4 border-2 border-gray-700">
+                  <h2 className="text-2xl font-bold text-white mb-4">No Hearts Left</h2>
+                  <p className="text-gray-300 mb-6">You've used all your hearts. Come back when they regenerate!</p>
+                  <div className="text-center">
+                    <p className="text-gray-400 mb-2">Time until regeneration:</p>
+                    <p className="text-3xl font-mono text-yellow-500 mb-6">
+                      {timeUntilRegeneration ? formatTime(timeUntilRegeneration) : '00:00:00'}
                     </p>
+                    <button
+                      onClick={handleBack}
+                      className="px-6 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors"
+                    >
+                      Return to Dashboard
+                    </button>
                   </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {status === 'countdown' && (
+                  <div className="text-6xl font-bold text-white mb-8">
+                    {countdown}
+                  </div>
+                )}
 
-                  <div className="p-4 bg-gray-700 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-white">Filler Words</h3>
-                      <span className={`text-2xl ${feedback.fillerWordCount <= 1 ? 'text-green-500' : 'text-red-500'}`}>
-                        {feedback.fillerWordCount}
-                      </span>
+                {status === 'recording' && (
+                  <div className="mb-8">
+                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 transition-all duration-100"
+                        style={{ width: `${progress}%` }}
+                      />
                     </div>
-                    <p className="text-gray-300">
-                      Number of filler words used in your response
-                    </p>
+                    <p className="text-white mt-2">Recording in progress...</p>
+                    <button
+                      onClick={stopRecording}
+                      className="mt-4 px-6 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                    >
+                      Stop Recording
+                    </button>
                   </div>
+                )}
 
-                  {Object.entries(requirementStatuses).map(([key, status]) => (
-                    <div key={key} className="p-4 bg-gray-700 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-white capitalize">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
-                        </h3>
-                        <span className={`text-2xl ${status.met ? 'text-green-500' : 'text-red-500'}`}>
-                          {status.met ? '✓' : '✗'}
-                        </span>
+                {(status === 'transcribing' || status === 'analyzing') && (
+                  <div className="mb-8 space-y-4">
+                    <div>
+                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500 to-transparent animate-scan" />
+                        <div className="absolute inset-0 bg-green-500/20" />
                       </div>
-                      <p className="text-white">
-                        {status.type === 'min' ? '≥' : '≤'} {status.target}
-                        <span className="text-gray-400 ml-2">
-                          (Current: {typeof status.value === 'number' ? status.value.toFixed(2) : status.value})
-                        </span>
-                      </p>
+                      <p className="text-white mt-2">Transcribing your speech...</p>
                     </div>
-                  ))}
-                </div>
-
-                <div className="p-4 bg-gray-700 rounded-lg">
-                  <h3 className="font-medium mb-2 text-white">Suggestions for Improvement</h3>
-                  <div className="space-y-4">
-                    {feedback.suggestions.map((suggestion, index) => {
-                      const colors = [
-                        'border-purple-500 text-purple-500',
-                        'border-green-500 text-green-500',
-                        'border-blue-500 text-blue-500',
-                        'border-orange-500 text-orange-500',
-                        'border-pink-500 text-pink-500',
-                        'border-yellow-500 text-yellow-500'
-                      ];
-                      const colorClass = colors[index % colors.length];
-                      
-                      return (
-                        <div key={index} className="flex items-center space-x-4">
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-full border-2 ${colorClass} flex items-center justify-center`}>
-                            <span className="font-medium">{index + 1}</span>
-                          </div>
-                          <p className="text-gray-300">{suggestion}</p>
-                        </div>
-                      );
-                    })}
+                    <div>
+                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500 to-transparent animate-scan" />
+                        <div className="absolute inset-0 bg-purple-500/20" />
+                      </div>
+                      <p className="text-white mt-2">Analyzing your response...</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="mt-6">
-                  {allRequirementsMet ? (
-                    <div className="text-center">
-                      <p className="text-green-400 mb-4">Great job! You've met all requirements!</p>
-                      <button
-                        onClick={handleNextLevel}
-                        className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                      >
-                        Next Level
-                      </button>
+                {status === 'idle' && !feedback && (
+                  <div className="flex justify-center space-x-4">
+                    <button
+                      onClick={startCountdown}
+                      disabled={isRecording || uploadLoading}
+                      className={`px-6 py-3 rounded-lg font-medium transition-all duration-150 uppercase tracking-wide ${
+                        isRecording || uploadLoading
+                          ? 'bg-gray-700 cursor-not-allowed text-gray-400'
+                          : 'bg-purple-500 hover:bg-purple-600 text-white border-b-4 border-purple-700 active:translate-y-1 active:border-b-0'
+                      }`}
+                    >
+                      Record
+                    </button>
+                  </div>
+                )}
+
+                {transcript && (
+                  <div className="mt-4 p-4 bg-gray-700 rounded-lg">
+                    <h3 className="font-medium mb-2 text-white">Transcript:</h3>
+                    <p className="text-gray-300">{transcript}</p>
+                  </div>
+                )}
+
+                {feedback && (
+                  <div className="mt-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-gray-700 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium text-white">Confidence Score</h3>
+                          <span className={`text-2xl ${feedback.confidenceScore >= 0.8 ? 'text-green-500' : 'text-yellow-500'}`}>
+                            {Math.round(feedback.confidenceScore * 100)}%
+                          </span>
+                        </div>
+                        <p className="text-gray-300">
+                          How confident the system is in understanding your speech
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-gray-700 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium text-white">Filler Words</h3>
+                          <span className={`text-2xl ${feedback.fillerWordCount <= 1 ? 'text-green-500' : 'text-red-500'}`}>
+                            {feedback.fillerWordCount}
+                          </span>
+                        </div>
+                        <p className="text-gray-300">
+                          Number of filler words used in your response
+                        </p>
+                      </div>
+
+                      {Number(unitId) === 4 && (
+                        <div className="p-4 bg-gray-700 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-medium text-white">Conciseness</h3>
+                            <div className="flex flex-col items-end">
+                              <span className={`text-xl ${requirementStatuses.conciseness?.met ? 'text-green-500' : 'text-red-500'}`}>
+                                {feedback.conciseness.wordCount} words
+                              </span>
+                              <span className={`text-sm ${requirementStatuses.conciseness?.met ? 'text-green-500' : 'text-red-500'}`}>
+                                {feedback.conciseness.sentenceCount} sentences
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-gray-300">
+                            Keeping your response concise and to the point
+                          </p>
+                        </div>
+                      )}
+
+                      {Number(unitId) === 5 && (
+                        <div className="p-4 bg-gray-700 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-medium text-white">Charisma Score</h3>
+                            <span className={`text-2xl ${requirementStatuses.charismaScore?.met ? 'text-green-500' : 'text-red-500'}`}>
+                              {feedback?.charismaScore || 0}/10
+                            </span>
+                          </div>
+                          <p className="text-gray-300">
+                            How engaging and memorable your delivery was
+                          </p>
+                        </div>
+                      )}
+
+                      {Object.entries(requirementStatuses).map(([key, status]) => {
+                        // Skip charisma for unit 5 as it's handled above
+                        if (key === 'charismaScore' && Number(unitId) === 5) return null;
+                        // Skip conciseness for unit 4 as it's handled above
+                        if (key === 'conciseness' && Number(unitId) === 4) return null;
+                        // Skip filler words as it's handled above
+                        if (key === 'fillerWords') return null;
+                        
+                        return (
+                          <div key={key} className="p-4 bg-gray-700 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-medium text-white capitalize">
+                                {key.replace(/([A-Z])/g, ' $1').trim()}
+                              </h3>
+                              <span className={`text-2xl ${status.met ? 'text-green-500' : 'text-red-500'}`}>
+                                {key === 'grammarScore' ? `${Math.round(status.value)}%` : 
+                                 key === 'wordChoiceScore' ? `${Math.round(status.value)}%` :
+                                 key === 'conciseness' ? `${status.value} words` :
+                                 status.met ? '✓' : '✗'}
+                              </span>
+                            </div>
+                            <p className="text-white">
+                              {status.type === 'min' ? '≥' : '≤'} {status.target}
+                              <span className="text-gray-400 ml-2">
+                                (Current: {typeof status.value === 'number' ? status.value.toFixed(2) : status.value})
+                              </span>
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-yellow-400 mb-4">Some requirements weren't met. Try again!</p>
-                      <button
-                        onClick={handleRetry}
-                        className="px-6 py-3 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-colors"
-                      >
-                        Retry
-                      </button>
+
+                    <div className="p-4 bg-gray-700 rounded-lg">
+                      <h3 className="font-medium mb-2 text-white">Suggestions for Improvement</h3>
+                      <div className="space-y-4">
+                        {feedback.suggestions.map((suggestion, index) => {
+                          const colors = [
+                            'border-purple-500 text-purple-500',
+                            'border-green-500 text-green-500',
+                            'border-blue-500 text-blue-500',
+                            'border-orange-500 text-orange-500',
+                            'border-pink-500 text-pink-500',
+                            'border-yellow-500 text-yellow-500'
+                          ];
+                          const colorClass = colors[index % colors.length];
+                          
+                          return (
+                            <div key={index} className="flex items-center space-x-4">
+                              <div className={`flex-shrink-0 w-8 h-8 rounded-full border-2 ${colorClass} flex items-center justify-center`}>
+                                <span className="font-medium">{index + 1}</span>
+                              </div>
+                              <p className="text-gray-300">{suggestion}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+
+                    <div className="mt-6">
+                      {allRequirementsMet ? (
+                        <div className="text-center">
+                          <p className="text-green-400 mb-4">Great job! You've met all requirements!</p>
+                          <button
+                            onClick={handleNextLevel}
+                            className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                          >
+                            Next Level
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <p className="text-yellow-400 mb-4">Some requirements weren't met. Try again!</p>
+                          <button
+                            onClick={handleRetry}
+                            className="px-6 py-3 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
