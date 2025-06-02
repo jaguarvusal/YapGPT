@@ -384,7 +384,7 @@ const Dashboard: React.FC = () => {
                       <div className="relative flex flex-col items-center">
                         {/* Add unit images */}
                         {level % 5 === 3 && (
-                          <div className={`absolute ${unit % 2 === 1 ? '-left-96' : '-right-96'} top-1/2 -translate-y-1/2 w-72 h-72`}>
+                          <div className={`absolute ${unit % 2 === 1 ? '-left-96' : '-right-96'} top-1/2 -translate-y-1/2 w-72 h-72 pointer-events-none`}>
                             <img 
                               src={`/src/assets 2/${unit === 1 ? 'chef' : unit === 2 ? 'boxer' : unit === 3 ? 'driver' : unit === 4 ? 'bodyguard' : 'wizard'}.png`} 
                               alt={`Unit ${unit} character`}
