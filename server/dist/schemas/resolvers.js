@@ -85,13 +85,34 @@ const resolvers = {
                 console.log('Audio file cleaned up');
                 // Analyze the transcript using GPT-4
                 console.log('Sending transcript to GPT for analysis...');
-                const analysis = await analyzeTranscript(transcript);
+                const analysis = await analyzeTranscript(transcript, "Analyze this speech for filler words, grammar, word choice, conciseness, charisma, and relevance.");
                 console.log('GPT Analysis received:', analysis);
-                return analysis;
+                if (!analysis) {
+                    throw new Error('No analysis received from GPT');
+                }
+                // Ensure all required fields are present
+                const response = {
+                    ...analysis,
+                    relevanceScore: analysis.relevanceScore ?? 50, // Default to 50 if missing
+                    charismaScore: analysis.charismaScore ?? 5, // Default to 5 if missing
+                    confidenceScore: analysis.confidenceScore ?? 0.5, // Default to 0.5 if missing
+                    grammarScore: analysis.grammarScore ?? 50, // Default to 50 if missing
+                    wordChoiceScore: analysis.wordChoiceScore ?? 50, // Default to 50 if missing
+                    fillerWordCount: analysis.fillerWordCount ?? 0, // Default to 0 if missing
+                    suggestions: analysis.suggestions ?? [], // Default to empty array if missing
+                    conciseness: {
+                        wordCount: analysis.conciseness?.wordCount ?? 0,
+                        sentenceCount: analysis.conciseness?.sentenceCount ?? 0
+                    }
+                };
+                return response;
             }
             catch (error) {
                 console.error('Error processing audio:', error);
-                throw new Error('Failed to process audio');
+                if (error.response?.data) {
+                    console.error('API Error details:', error.response.data);
+                }
+                throw new Error(`Failed to process audio: ${error.message}`);
             }
         },
     },

@@ -152,7 +152,7 @@ const RightSidebar: React.FC = () => {
             <div className="flex items-center space-x-4">
               <StreakIcon className="text-orange-500" />
               <div className="flex items-center -mt-32 -ml-12">
-                <span className="text-3xl font-medium text-orange-500 mr-2">{streak === 1 ? 'Day' : 'Days'}</span>
+                <span className="text-3xl font-medium text-orange-500 mr-2">Day</span>
                 <span className="text-6xl font-semibold text-orange-500">{streak}</span>
               </div>
             </div>

@@ -31,6 +31,7 @@ const typeDefs = `
     wordChoiceScore: Float!
     conciseness: Conciseness!
     charismaScore: Float!
+    relevanceScore: Float!
     suggestions: [String]!
   }
 

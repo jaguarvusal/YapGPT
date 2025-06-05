@@ -5,6 +5,7 @@ interface LessonRequirements {
   conciseness?: { maxWords?: number; maxSentences?: number };
   concisenessScore?: { min: number };
   charismaScore?: { min: number };
+  relevanceScore?: { min: number };
 }
 
 export type LessonMode = 
@@ -32,12 +33,42 @@ export interface LessonsData {
   units: Unit[];
 }
 
+// Function to calculate minimum relevance score based on level
+const calculateMinRelevance = (level: number, unit: number): number => {
+  // Calculate total level number (e.g., unit 5 level 1 = level 21)
+  const totalLevel = ((unit - 1) * 5) + level;
+  // Linear progression from 60% at level 1 to 95% at level 25
+  return Math.round(60 + ((totalLevel - 1) * (95 - 60) / 24));
+};
+
+// Helper function to add relevance requirements to lessons
+const addRelevanceRequirements = (lessons: any[], unit: number) => {
+  return lessons.map((lesson) => ({
+    ...lesson,
+    requirements: {
+      ...lesson.requirements,
+      relevanceScore: { min: calculateMinRelevance(lesson.level, unit) }
+    }
+  }));
+};
+
+// Helper function to add charisma requirements to lessons
+const addCharismaRequirements = (lessons: any[], unit: number) => {
+  return lessons.map((lesson) => ({
+    ...lesson,
+    requirements: {
+      ...lesson.requirements,
+      charismaScore: { min: unit === 5 ? 7 : 0 } // Only add charisma requirements for unit 5
+    }
+  }));
+};
+
 export const lessonsData: LessonsData = {
   "units": [
     {
       "unit": 1,
       "title": "Filler Words",
-      "lessons": [
+      "lessons": addRelevanceRequirements(addCharismaRequirements([
         {
           "level": 1,
           "mode": "Improv Rant",
@@ -83,12 +114,12 @@ export const lessonsData: LessonsData = {
             "fillerWords": { "max": 1 }
           }
         }
-      ]
+      ], 1), 1)
     },
     {
       "unit": 2,
       "title": "Grammar",
-      "lessons": [
+      "lessons": addRelevanceRequirements(addCharismaRequirements([
         {
           "level": 1,
           "mode": "Open Question",
@@ -139,12 +170,12 @@ export const lessonsData: LessonsData = {
             "grammarScore": { "min": 94 }
           }
         }
-      ]
+      ], 2), 2)
     },
     {
       "unit": 3,
       "title": "Word Choice",
-      "lessons": [
+      "lessons": addRelevanceRequirements(addCharismaRequirements([
         {
           "level": 1,
           "mode": "Describe & Convince",
@@ -200,12 +231,12 @@ export const lessonsData: LessonsData = {
             "wordChoiceScore": { "min": 85 }
           }
         }
-      ]
+      ], 3), 3)
     },
     {
       "unit": 4,
       "title": "Conciseness",
-      "lessons": [
+      "lessons": addRelevanceRequirements(addCharismaRequirements([
         {
           "level": 1,
           "mode": "Opinion Clash",
@@ -266,12 +297,12 @@ export const lessonsData: LessonsData = {
             "concisenessScore": { "min": 90 }
           }
         }
-      ]
+      ], 4), 4)
     },
     {
       "unit": 5,
-      "title": "Charisma",
-      "lessons": [
+      "title": "Relevance",
+      "lessons": addRelevanceRequirements(addCharismaRequirements([
         {
           "level": 1,
           "mode": "Pretend Scenario",
@@ -280,9 +311,9 @@ export const lessonsData: LessonsData = {
           "requirements": {
             "fillerWords": { "max": 1 },
             "grammarScore": { "min": 85 },
-            "wordChoiceScore": { "min": 70 },
+            "wordChoiceScore": { "min": 85 },
             "concisenessScore": { "min": 60 },
-            "charismaScore": { "min": 4 }
+            "charismaScore": { "min": 6 }
           }
         },
         {
@@ -293,9 +324,9 @@ export const lessonsData: LessonsData = {
           "requirements": {
             "fillerWords": { "max": 1 },
             "grammarScore": { "min": 88 },
-            "wordChoiceScore": { "min": 75 },
+            "wordChoiceScore": { "min": 88 },
             "concisenessScore": { "min": 70 },
-            "charismaScore": { "min": 6 }
+            "charismaScore": { "min": 7 }
           }
         },
         {
@@ -306,9 +337,9 @@ export const lessonsData: LessonsData = {
           "requirements": {
             "fillerWords": { "max": 1 },
             "grammarScore": { "min": 90 },
-            "wordChoiceScore": { "min": 78 },
+            "wordChoiceScore": { "min": 90 },
             "concisenessScore": { "min": 75 },
-            "charismaScore": { "min": 7 }
+            "charismaScore": { "min": 8 }
           }
         },
         {
@@ -319,9 +350,9 @@ export const lessonsData: LessonsData = {
           "requirements": {
             "fillerWords": { "max": 1 },
             "grammarScore": { "min": 92 },
-            "wordChoiceScore": { "min": 80 },
-            "concisenessScore": { "min": 85 },
-            "charismaScore": { "min": 8 }
+            "wordChoiceScore": { "min": 92 },
+            "concisenessScore": { "min": 80 },
+            "charismaScore": { "min": 9 }
           }
         },
         {
@@ -332,12 +363,12 @@ export const lessonsData: LessonsData = {
           "requirements": {
             "fillerWords": { "max": 1 },
             "grammarScore": { "min": 94 },
-            "wordChoiceScore": { "min": 85 },
+            "wordChoiceScore": { "min": 95 },
             "concisenessScore": { "min": 90 },
-            "charismaScore": { "min": 9 }
+            "charismaScore": { "min": 10 }
           }
         }
-      ]
+      ], 5), 5)
     }
   ]
 };

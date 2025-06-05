@@ -47,6 +47,7 @@ export const UPLOAD_AUDIO = gql`
         sentenceCount
       }
       charismaScore
+      relevanceScore
       suggestions
     }
   }

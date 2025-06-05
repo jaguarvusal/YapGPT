@@ -28,6 +28,7 @@ interface AudioResponse {
     sentenceCount: number;
   };
   charismaScore: number;
+  relevanceScore: number;
   suggestions: string[];
 }
 
@@ -172,80 +173,95 @@ const Lesson: React.FC = () => {
               };
               console.log('Upload variables:', uploadVariables);
 
-              const { data } = await uploadAudio({
+              const { data, errors } = await uploadAudio({
                 variables: uploadVariables
               });
 
               console.log('Upload response:', data);
+              if (errors) {
+                console.error('GraphQL Errors:', errors);
+                throw new Error(errors[0].message);
+              }
 
-              if (data?.uploadAudio) {
-                setTranscript(data.uploadAudio.transcript);
-                setFeedback(data.uploadAudio);
-                
-                // Check requirements
-                const statuses: Record<string, RequirementStatus> = {};
-                const currentLessonData = lessonDataRef.current;
-                console.log('Current lesson data during processing:', currentLessonData);
-                
-                if (currentLessonData?.requirements.fillerWords) {
-                  statuses.fillerWords = {
-                    met: data.uploadAudio.fillerWordCount <= currentLessonData.requirements.fillerWords.max,
-                    value: data.uploadAudio.fillerWordCount,
-                    target: currentLessonData.requirements.fillerWords.max,
-                    type: 'max'
-                  };
-                  console.log('Filler words status:', statuses.fillerWords);
-                } else {
-                  console.log('No filler words requirement found in lesson data:', currentLessonData);
-                }
-                
-                if (currentLessonData?.requirements.grammarScore) {
-                  statuses.grammarScore = {
-                    met: data.uploadAudio.grammarScore >= currentLessonData.requirements.grammarScore.min,
-                    value: data.uploadAudio.grammarScore,
-                    target: currentLessonData.requirements.grammarScore.min,
-                    type: 'min'
-                  };
-                }
-                
-                if (currentLessonData?.requirements.wordChoiceScore) {
-                  statuses.wordChoiceScore = {
-                    met: data.uploadAudio.wordChoiceScore >= currentLessonData.requirements.wordChoiceScore.min,
-                    value: data.uploadAudio.wordChoiceScore,
-                    target: currentLessonData.requirements.wordChoiceScore.min,
-                    type: 'min'
-                  };
-                }
-                
-                if (currentLessonData?.requirements.conciseness || currentLessonData?.requirements.concisenessScore) {
-                  statuses.conciseness = {
-                    met: data.uploadAudio.conciseness.wordCount <= (currentLessonData.requirements.conciseness?.maxWords || 60) &&
-                         data.uploadAudio.conciseness.sentenceCount <= (currentLessonData.requirements.conciseness?.maxSentences || Infinity),
-                    value: data.uploadAudio.conciseness.wordCount,
-                    target: currentLessonData.requirements.conciseness?.maxWords || 0,
-                    type: 'max'
-                  };
-                }
-                
-                if (currentLessonData?.requirements.charismaScore) {
-                  statuses.charismaScore = {
-                    met: data.uploadAudio.charismaScore >= currentLessonData.requirements.charismaScore.min,
-                    value: data.uploadAudio.charismaScore,
-                    target: currentLessonData.requirements.charismaScore.min,
-                    type: 'min'
-                  };
-                }
-                
-                console.log('Lesson requirements:', currentLessonData?.requirements);
-                setRequirementStatuses(statuses);
-                console.log('All requirement statuses:', statuses);
-                console.log('All requirements met:', Object.keys(statuses).length > 0 && Object.values(statuses).every(status => status.met));
+              if (!data?.uploadAudio) {
+                throw new Error('No response data received from server');
+              }
+
+              setTranscript(data.uploadAudio.transcript);
+              setFeedback(data.uploadAudio);
+              
+              // Check requirements
+              const statuses: Record<string, RequirementStatus> = {};
+              const currentLessonData = lessonDataRef.current;
+              console.log('Current lesson data during processing:', currentLessonData);
+              
+              if (currentLessonData?.requirements.fillerWords) {
+                statuses.fillerWords = {
+                  met: data.uploadAudio.fillerWordCount <= currentLessonData.requirements.fillerWords.max,
+                  value: data.uploadAudio.fillerWordCount,
+                  target: currentLessonData.requirements.fillerWords.max,
+                  type: 'max'
+                };
+                console.log('Filler words status:', statuses.fillerWords);
+              } else {
+                console.log('No filler words requirement found in lesson data:', currentLessonData);
               }
               
+              if (currentLessonData?.requirements.grammarScore) {
+                statuses.grammarScore = {
+                  met: data.uploadAudio.grammarScore >= currentLessonData.requirements.grammarScore.min,
+                  value: data.uploadAudio.grammarScore,
+                  target: currentLessonData.requirements.grammarScore.min,
+                  type: 'min'
+                };
+              }
+              
+              if (currentLessonData?.requirements.wordChoiceScore) {
+                statuses.wordChoiceScore = {
+                  met: data.uploadAudio.wordChoiceScore >= currentLessonData.requirements.wordChoiceScore.min,
+                  value: data.uploadAudio.wordChoiceScore,
+                  target: currentLessonData.requirements.wordChoiceScore.min,
+                  type: 'min'
+                };
+              }
+              
+              if (currentLessonData?.requirements.conciseness || currentLessonData?.requirements.concisenessScore) {
+                statuses.conciseness = {
+                  met: data.uploadAudio.conciseness.wordCount <= (currentLessonData.requirements.conciseness?.maxWords || 60) &&
+                       data.uploadAudio.conciseness.sentenceCount <= (currentLessonData.requirements.conciseness?.maxSentences || Infinity),
+                  value: data.uploadAudio.conciseness.wordCount,
+                  target: currentLessonData.requirements.conciseness?.maxWords || 0,
+                  type: 'max'
+                };
+              }
+              
+              if (currentLessonData?.requirements.charismaScore) {
+                statuses.charismaScore = {
+                  met: data.uploadAudio.charismaScore >= currentLessonData.requirements.charismaScore.min,
+                  value: data.uploadAudio.charismaScore,
+                  target: currentLessonData.requirements.charismaScore.min,
+                  type: 'min'
+                };
+              }
+              
+              if (currentLessonData?.requirements.relevanceScore) {
+                statuses.relevanceScore = {
+                  met: data.uploadAudio.relevanceScore >= currentLessonData.requirements.relevanceScore.min,
+                  value: data.uploadAudio.relevanceScore,
+                  target: currentLessonData.requirements.relevanceScore.min,
+                  type: 'min'
+                };
+              }
+              
+              console.log('Lesson requirements:', currentLessonData?.requirements);
+              setRequirementStatuses(statuses);
+              console.log('All requirement statuses:', statuses);
+              console.log('All requirements met:', Object.keys(statuses).length > 0 && Object.values(statuses).every(status => status.met));
+              
               setStatus('idle');
-            } catch (uploadError) {
+            } catch (uploadError: any) {
               console.error('Upload error:', uploadError);
-              setError('Failed to upload audio');
+              setError(uploadError.message || 'Failed to upload audio');
               setStatus('idle');
             }
           };
@@ -542,6 +558,18 @@ const Lesson: React.FC = () => {
                     <span>At least {lessonData.requirements.charismaScore.min} out of 10</span>
                   </div>
                 )}
+                {lessonData.requirements.relevanceScore && (
+                  <div className={`flex items-center justify-between ${
+                    !feedback 
+                      ? 'text-white' 
+                      : !requirementStatuses.relevanceScore?.met 
+                        ? 'text-red-500' 
+                        : 'text-green-500'
+                  }`}>
+                    <span>Relevance Score</span>
+                    <span>At least {lessonData.requirements.relevanceScore.min}%</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -638,22 +666,10 @@ const Lesson: React.FC = () => {
                 {feedback && (
                   <div className="mt-6 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-700 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium text-white">Confidence Score</h3>
-                          <span className={`text-2xl ${feedback.confidenceScore >= 0.8 ? 'text-green-500' : 'text-yellow-500'}`}>
-                            {Math.round(feedback.confidenceScore * 100)}%
-                          </span>
-                        </div>
-                        <p className="text-gray-300">
-                          How confident the system is in understanding your speech
-                        </p>
-                      </div>
-
-                      <div className="p-4 bg-gray-700 rounded-lg">
+                      <div className="p-4 bg-orange-500 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-medium text-white">Filler Words</h3>
-                          <span className={`text-2xl ${feedback.fillerWordCount <= 1 ? 'text-green-500' : 'text-red-500'}`}>
+                          <span className={`text-2xl ${feedback.fillerWordCount <= 1 ? 'text-green-600' : 'text-red-800'}`}>
                             {feedback.fillerWordCount}
                           </span>
                         </div>
@@ -663,14 +679,14 @@ const Lesson: React.FC = () => {
                       </div>
 
                       {Number(unitId) === 4 && (
-                        <div className="p-4 bg-gray-700 rounded-lg">
+                        <div className="p-4 bg-purple-500 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-medium text-white">Conciseness</h3>
                             <div className="flex flex-col items-end">
-                              <span className={`text-xl ${requirementStatuses.conciseness?.met ? 'text-green-500' : 'text-red-500'}`}>
+                              <span className={`text-xl ${requirementStatuses.conciseness?.met ? 'text-green-400' : 'text-red-800'}`}>
                                 {feedback.conciseness.wordCount} words
                               </span>
-                              <span className={`text-sm ${requirementStatuses.conciseness?.met ? 'text-green-500' : 'text-red-500'}`}>
+                              <span className={`text-sm ${requirementStatuses.conciseness?.met ? 'text-green-400' : 'text-red-800'}`}>
                                 {feedback.conciseness.sentenceCount} sentences
                               </span>
                             </div>
@@ -682,43 +698,65 @@ const Lesson: React.FC = () => {
                       )}
 
                       {Number(unitId) === 5 && (
-                        <div className="p-4 bg-gray-700 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-medium text-white">Charisma Score</h3>
-                            <span className={`text-2xl ${requirementStatuses.charismaScore?.met ? 'text-green-500' : 'text-red-500'}`}>
-                              {feedback?.charismaScore || 0}/10
-                            </span>
+                        <>
+                          <div className="p-4 bg-red-500 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-medium text-white">Relevance Score</h3>
+                              <span className={`text-2xl ${requirementStatuses.relevanceScore?.met ? 'text-green-400' : 'text-red-800'}`}>
+                                {feedback?.relevanceScore || 0}%
+                              </span>
+                            </div>
+                            <p className="text-gray-300">
+                              How well your response matches the prompt's intent
+                            </p>
                           </div>
-                          <p className="text-gray-300">
-                            How engaging and memorable your delivery was
-                          </p>
-                        </div>
+                          <div className="p-4 bg-yellow-500 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-medium text-white">Charisma Score</h3>
+                              <span className={`text-2xl ${requirementStatuses.charismaScore?.met ? 'text-green-400' : 'text-red-800'}`}>
+                                {feedback?.charismaScore || 0}/10
+                              </span>
+                            </div>
+                            <p className="text-gray-300">
+                              Your ability to engage and captivate the audience
+                            </p>
+                          </div>
+                        </>
                       )}
 
                       {Object.entries(requirementStatuses).map(([key, status]) => {
-                        // Skip charisma for unit 5 as it's handled above
-                        if (key === 'charismaScore' && Number(unitId) === 5) return null;
+                        // Skip relevance for unit 5 as it's handled above
+                        if (key === 'relevanceScore' && Number(unitId) === 5) return null;
                         // Skip conciseness for unit 4 as it's handled above
                         if (key === 'conciseness' && Number(unitId) === 4) return null;
                         // Skip filler words as it's handled above
                         if (key === 'fillerWords') return null;
+                        // Skip charisma score for unit 5 as it's handled above
+                        if (key === 'charismaScore' && Number(unitId) === 5) return null;
                         
                         return (
-                          <div key={key} className="p-4 bg-gray-700 rounded-lg">
+                          <div key={key} className={`p-4 ${
+                            key === 'grammarScore' ? 'bg-blue-500' :
+                            key === 'wordChoiceScore' ? 'bg-green-500' :
+                            key === 'conciseness' ? 'bg-purple-500' :
+                            key === 'relevanceScore' ? 'bg-red-500' :
+                            'bg-gray-700'
+                          } rounded-lg`}>
                             <div className="flex items-center justify-between mb-2">
                               <h3 className="font-medium text-white capitalize">
                                 {key.replace(/([A-Z])/g, ' $1').trim()}
                               </h3>
-                              <span className={`text-2xl ${status.met ? 'text-green-500' : 'text-red-500'}`}>
+                              <span className={`text-2xl ${status.met ? 'text-green-400' : 'text-red-800'}`}>
                                 {key === 'grammarScore' ? `${Math.round(status.value)}%` : 
                                  key === 'wordChoiceScore' ? `${Math.round(status.value)}%` :
+                                 key === 'relevanceScore' ? `${Math.round(status.value)}%` :
                                  key === 'conciseness' ? `${status.value} words` :
                                  status.met ? '✓' : '✗'}
                               </span>
                             </div>
                             <p className="text-white">
                               {status.type === 'min' ? '≥' : '≤'} {status.target}
-                              <span className="text-gray-400 ml-2">
+                              <span className="text-gray-300 ml-2">
                                 (Current: {typeof status.value === 'number' ? status.value.toFixed(2) : status.value})
                               </span>
                             </p>
@@ -756,7 +794,7 @@ const Lesson: React.FC = () => {
                     <div className="mt-6">
                       {allRequirementsMet ? (
                         <div className="text-center">
-                          <p className="text-green-400 mb-4">Great job! You've met all requirements!</p>
+                          <p className="text-green-800 mb-4">Great job! You've met all requirements!</p>
                           <button
                             onClick={handleNextLevel}
                             className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
@@ -766,7 +804,7 @@ const Lesson: React.FC = () => {
                         </div>
                       ) : (
                         <div className="text-center">
-                          <p className="text-yellow-400 mb-4">Some requirements weren't met. Try again!</p>
+                          <p className="text-yellow-800 mb-4">Some requirements weren't met. Try again!</p>
                           <button
                             onClick={handleRetry}
                             className="px-6 py-3 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-colors"

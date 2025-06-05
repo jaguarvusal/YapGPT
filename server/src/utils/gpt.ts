@@ -11,10 +11,11 @@ interface GPTAnalysis {
     sentenceCount: number;
   };
   charismaScore: number;
+  relevanceScore: number;
   suggestions: string[];
 }
 
-export const analyzeTranscript = async (transcript: string): Promise<GPTAnalysis> => {
+export const analyzeTranscript = async (transcript: string, prompt: string): Promise<GPTAnalysis> => {
   try {
     console.log('Starting GPT analysis for transcript:', transcript);
     
@@ -39,6 +40,7 @@ IMPORTANT: You must respond with a valid JSON object in this exact format:
     "sentenceCount": number
   },
   "charismaScore": number between 0 and 10,
+  "relevanceScore": number between 0 and 100,
   "suggestions": ["suggestion1", "suggestion2", "suggestion3"]
 }
 
@@ -120,6 +122,15 @@ For charisma score (0-10):
 - Look for personal connection
 - Score based on overall charisma
 
+For relevance score (0-100):
+- Evaluate how well the response addresses the specific prompt/question
+- Check if key points from the prompt are covered
+- Assess the logical connection between response and prompt
+- Consider the completeness of the answer
+- Score based on overall relevance to the given prompt
+- Higher scores indicate better alignment with the prompt's requirements
+- Lower scores indicate responses that are off-topic or miss key points
+
 For confidence score:
 - Score between 0 (low) and 1 (high)
 - Consider clarity, pace, and filler word usage
@@ -138,7 +149,7 @@ DO NOT include any text outside the JSON object. The response must be valid JSON
           },
           {
             role: 'user',
-            content: transcript
+            content: `Prompt: ${prompt}\n\nTranscript: ${transcript}`
           }
         ],
         temperature: 0.3
@@ -152,27 +163,53 @@ DO NOT include any text outside the JSON object. The response must be valid JSON
     );
 
     console.log('Received GPT response:', response.data);
-    
     const content = response.data.choices[0].message.content;
     console.log('Raw GPT content:', content);
-    
+
     try {
       const analysis = JSON.parse(content);
       console.log('Parsed analysis:', analysis);
-      
-      if (!analysis.transcript || 
-          typeof analysis.fillerWordCount !== 'number' || 
-          typeof analysis.confidenceScore !== 'number' || 
+      console.log('Analysis fields:', {
+        transcript: !!analysis.transcript,
+        fillerWordCount: typeof analysis.fillerWordCount,
+        confidenceScore: typeof analysis.confidenceScore,
+        suggestions: Array.isArray(analysis.suggestions),
+        grammarScore: typeof analysis.grammarScore,
+        wordChoiceScore: typeof analysis.wordChoiceScore,
+        conciseness: !!analysis.conciseness,
+        concisenessWordCount: typeof analysis.conciseness?.wordCount,
+        concisenessSentenceCount: typeof analysis.conciseness?.sentenceCount,
+        charismaScore: typeof analysis.charismaScore,
+        relevanceScore: typeof analysis.relevanceScore
+      });
+
+      if (!analysis.transcript ||
+          typeof analysis.fillerWordCount !== 'number' ||
+          typeof analysis.confidenceScore !== 'number' ||
           !Array.isArray(analysis.suggestions) ||
-          typeof analysis.grammarScore !== 'number' || 
+          typeof analysis.grammarScore !== 'number' ||
           typeof analysis.wordChoiceScore !== 'number' ||
-          !analysis.conciseness || 
+          !analysis.conciseness ||
           typeof analysis.conciseness.wordCount !== 'number' ||
           typeof analysis.conciseness.sentenceCount !== 'number' ||
-          typeof analysis.charismaScore !== 'number') {
+          typeof analysis.charismaScore !== 'number' ||
+          typeof analysis.relevanceScore !== 'number') {
+        console.error('Invalid analysis format. Missing or invalid fields:', {
+          transcript: !analysis.transcript,
+          fillerWordCount: typeof analysis.fillerWordCount !== 'number',
+          confidenceScore: typeof analysis.confidenceScore !== 'number',
+          suggestions: !Array.isArray(analysis.suggestions),
+          grammarScore: typeof analysis.grammarScore !== 'number',
+          wordChoiceScore: typeof analysis.wordChoiceScore !== 'number',
+          conciseness: !analysis.conciseness,
+          concisenessWordCount: typeof analysis.conciseness?.wordCount !== 'number',
+          concisenessSentenceCount: typeof analysis.conciseness?.sentenceCount !== 'number',
+          charismaScore: typeof analysis.charismaScore !== 'number',
+          relevanceScore: typeof analysis.relevanceScore !== 'number'
+        });
         throw new Error('Invalid analysis format');
       }
-      
+
       return analysis;
     } catch (parseError) {
       console.error('Error parsing GPT response:', parseError);
