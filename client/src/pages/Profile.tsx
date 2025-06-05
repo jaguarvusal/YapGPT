@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client';
 import { QUERY_SINGLE_YAPPER, QUERY_ME } from '../utils/queries';
 
 import Auth from '../utils/auth';
+import SplashScreen from '../components/SplashScreen';
 
 const Profile = () => {
   const { yapperId } = useParams();
@@ -26,7 +27,7 @@ const Profile = () => {
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <SplashScreen />;
   }
 
   if (!yapper?.name) {

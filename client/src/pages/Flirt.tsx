@@ -7,6 +7,25 @@ import spanishImage from '../assets 2/spanish 1.png';
 import russianImage from '../assets 2/russian1.png';
 import kissImage from '../assets 2/kiss.png';
 import loveImage from '../assets 2/love.png';
+import favicon from '../assets 2/favicon.png';
+import SplashScreen from '../components/SplashScreen';
+
+// Add custom animation for reverse spin
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes spin-reverse {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+  .animate-spin-reverse {
+    animation: spin-reverse 3s linear infinite;
+  }
+`;
+document.head.appendChild(style);
 
 const GET_CHARACTERS = gql`
   query GetCharacters {
@@ -55,6 +74,7 @@ const Flirt: React.FC = () => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [userInput, setUserInput] = useState('');
+  const [showSplash, setShowSplash] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const { loading, error, data } = useQuery(GET_CHARACTERS);
@@ -122,7 +142,9 @@ const Flirt: React.FC = () => {
     setShowAnalysis(true);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading || showSplash) {
+    return <SplashScreen onClick={() => setShowSplash(false)} />;
+  }
   if (error) return <div>Error: {error.message}</div>;
 
   return (
@@ -132,7 +154,9 @@ const Flirt: React.FC = () => {
           <div className="w-full">
             <div className="w-full max-w-6xl mx-auto px-4">
               <div className="flex items-center justify-center gap-4 mb-8">
-                <h1 className="text-3xl font-bold text-black text-center">Pick a girl to flirt with</h1>
+                <h1 className="text-3xl font-bold text-black text-center">
+                  <span className="border-b-4 border-pink-500">Pick a girl</span> to flirt with
+                </h1>
                 <img src={loveImage} alt="Love" className="w-12 h-16" />
               </div>
             </div>
