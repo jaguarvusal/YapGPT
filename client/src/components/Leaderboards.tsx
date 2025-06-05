@@ -1,23 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@apollo/client';
 import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
-import Hearts from './Hearts';
-import { useStreak } from '../contexts/StreakContext';
-import StreakIcon from './StreakIcon';
 import passwordIcon from '../assets 2/password.png';
+import leaderboardPreview from '../assets 2/leaderboardpreview.png';
 
-const RightSidebar: React.FC = () => {
-  const { streak } = useStreak();
-  const [showSignup, setShowSignup] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+const Leaderboards: React.FC = () => {
+  const [activeForm, setActiveForm] = useState<'signup' | 'login' | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordTooltip, setShowPasswordTooltip] = useState(false);
   const [formState, setFormState] = useState({
     name: '',
     email: '',
     password: '',
+    identifier: '',
   });
   const [passwordCriteria, setPasswordCriteria] = useState({
     length: false,
@@ -25,28 +21,10 @@ const RightSidebar: React.FC = () => {
     uppercase: false,
   });
   const [passwordError, setPasswordError] = useState('');
+  const formRef = useRef<HTMLDivElement>(null);
 
   const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
-
-  const scrollToForm = () => {
-    const formElement = document.getElementById('auth-form');
-    if (formElement) {
-      formElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleShowSignup = () => {
-    setShowSignup(true);
-    setShowLogin(false);
-    setTimeout(scrollToForm, 100); // Small delay to ensure the form is rendered
-  };
-
-  const handleShowLogin = () => {
-    setShowLogin(true);
-    setShowSignup(false);
-    setTimeout(scrollToForm, 100); // Small delay to ensure the form is rendered
-  };
 
   useEffect(() => {
     const password = formState.password;
@@ -77,6 +55,14 @@ const RightSidebar: React.FC = () => {
     });
   };
 
+  const handleFormToggle = (form: 'signup' | 'login') => {
+    setActiveForm(activeForm === form ? null : form);
+    // Scroll to form after a short delay to ensure it's rendered
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
   const handleSignup = async (event: React.FormEvent) => {
     event.preventDefault();
     
@@ -93,14 +79,14 @@ const RightSidebar: React.FC = () => {
       
       if (data?.addYapper?.token) {
         // Clear all states first
-        setFormState({ name: '', email: '', password: '' });
+        setFormState({ name: '', email: '', password: '', identifier: '' });
         setPasswordError('');
         setShowPasswordTooltip(false);
         setShowPassword(false);
         
         // Then login and hide signup form
         Auth.login(data.addYapper.token);
-        setShowSignup(false);
+        setActiveForm(null);
       }
     } catch (e) {
       console.error(e);
@@ -110,111 +96,50 @@ const RightSidebar: React.FC = () => {
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      console.log('Attempting login with:', { identifier: formState.email, password: formState.password });
       const { data } = await login({
         variables: { 
-          identifier: formState.email, 
+          identifier: formState.identifier,
           password: formState.password 
         },
       });
+      
       if (data?.login?.token) {
         Auth.login(data.login.token);
-        setShowLogin(false);
-        setFormState({ name: '', email: '', password: '' });
+        setActiveForm(null);
       }
-    } catch (e: any) {
-      console.error('Login error:', e);
-      // The error message will be displayed in the UI through the loginError state
+    } catch (e) {
+      console.error(e);
     }
-  };
-
-  const formatJoinDate = () => {
-    const profile = Auth.getProfile();
-    if (profile?.data) {
-      const date = new Date();
-      return `Joined in ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
-    }
-    return '';
   };
 
   return (
-    <div className="flex flex-col space-y-2">
-      <div className="flex flex-col space-y-4">
-        <div className="bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl p-4 shadow-lg border-4 border-[#17475c]">
-          <h2 className="text-lg font-semibold text-black mb-2">Lives</h2>
-          <div className="flex justify-center">
-            <Hearts />
-          </div>
-        </div>
-        <div className="bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl p-4 pb-0 shadow-lg border-4 border-[#17475c]">
-          <h2 className="text-lg font-semibold text-black mb-2">Streak</h2>
-          <div className="flex justify-center">
-            <div className="flex items-center space-x-4">
-              <StreakIcon className="text-orange-500" />
-              <div className="flex items-center -mt-32 -ml-12">
-                <span className="text-3xl font-medium text-orange-500 mr-2">{streak === 1 ? 'Day' : 'Days'}</span>
-                <span className="text-6xl font-semibold text-orange-500">{streak}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Stats Section */}
-      <div className="sticky top-0 bg-[#f3e0b7]/80 backdrop-blur-md pt-4 pb-2 z-20">
-        {/* Health Status */}
-        <div className="flex items-center justify-center space-x-8">
-        </div>
+    <div className="flex-1 flex flex-col items-center pt-4">
+      <img 
+        src="/src/assets 2/medals.png" 
+        alt="Medals" 
+        className="w-64 h-auto mb-2"
+      />
+      <h1 className="text-3xl font-bold text-black mb-1">Unlock Leaderboards!</h1>
+      <p className="text-gray-600 text-base mb-4">Create an account or login to start competing</p>
+      
+      <div className="flex space-x-3 w-64">
+        <button 
+          onClick={() => handleFormToggle('signup')}
+          className="w-1/2 bg-[#e15831] text-white py-2 px-4 rounded-lg hover:bg-[#c94d2b] transition-all duration-150 text-center border-b-4 border-[#b34426] active:translate-y-1 active:border-b-0 uppercase font-medium"
+        >
+          Sign Up
+        </button>
+        <button 
+          onClick={() => handleFormToggle('login')}
+          className="w-1/2 bg-[#17475c] text-white py-2 px-4 rounded-lg hover:bg-[#1a5266] transition-all duration-150 text-center border-b-4 border-[#123a4c] active:translate-y-1 active:border-b-0 uppercase font-medium"
+        >
+          Log In
+        </button>
       </div>
 
-      {/* Profile Card */}
-      <div className="mt-0 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 max-w-[350px] border-4 border-dashed border-[#17475c]">
-        {Auth.loggedIn() ? (
-          <>
-            <h2 className="text-lg font-semibold mb-2 text-white">
-              {Auth.getProfile().data.username}
-            </h2>
-            <p className="text-gray-400 text-sm mb-6">{formatJoinDate()}</p>
-            <div className="space-y-3">
-              <Link 
-                to="/me"
-                className="block w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-all duration-150 text-center border-b-4 border-purple-600 active:translate-y-1 active:border-b-0"
-              >
-                View Profile
-              </Link>
-              <button 
-                onClick={() => Auth.logout()}
-                className="w-full bg-white text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-100 transition-all duration-150 border-b-4 border-gray-200 active:translate-y-1 active:border-b-0"
-              >
-                Log Out
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className="text-lg font-semibold mb-6 text-black">
-              Create a profile to save your progress!
-            </h2>
-            <div className="space-y-3">
-              <button 
-                onClick={handleShowSignup}
-                className="block w-full bg-[#17475c] text-white py-2 px-4 rounded-lg hover:bg-[#1a5266] transition-all duration-150 text-center border-b-4 border-[#123a4c] active:translate-y-1 active:border-b-0 uppercase font-medium"
-              >
-                Sign Up
-              </button>
-              <button 
-                onClick={handleShowLogin}
-                className="block w-full bg-[#e15831] text-white py-2 px-4 rounded-lg hover:bg-[#c94d2b] transition-all duration-150 text-center border-b-4 border-[#b34426] active:translate-y-1 active:border-b-0 uppercase font-medium"
-              >
-                Log In
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Signup Card */}
-      {showSignup && (
-        <div id="auth-form" className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 max-w-[350px] border-4 border-dashed border-[#17475c] animate-fadeIn">
+      {/* Signup Form */}
+      {activeForm === 'signup' && (
+        <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-64 border-4 border-dashed border-[#17475c] animate-fadeIn">
           <h2 className="text-lg font-semibold mb-6 text-black">Create a Profile</h2>
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
@@ -289,29 +214,27 @@ const RightSidebar: React.FC = () => {
             {signupError && (
               <p className="text-red-500 text-sm">{signupError.message}</p>
             )}
-            <div>
-              <button
-                type="submit"
-                className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-all duration-150 text-center border-b-4 border-purple-600 active:translate-y-1 active:border-b-0 uppercase font-medium"
-              >
-                Create Account
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-all duration-150 text-center border-b-4 border-purple-600 active:translate-y-1 active:border-b-0 uppercase font-medium"
+            >
+              Create Account
+            </button>
           </form>
         </div>
       )}
 
-      {/* Login Card */}
-      {showLogin && (
-        <div id="auth-form" className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 max-w-[350px] border-4 border-dashed border-[#17475c] animate-fadeIn">
+      {/* Login Form */}
+      {activeForm === 'login' && (
+        <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-64 border-4 border-dashed border-[#17475c] animate-fadeIn">
           <h2 className="text-lg font-semibold mb-6 text-black">Log In</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <input
                 type="text"
-                name="email"
+                name="identifier"
                 placeholder="Email or Username"
-                value={formState.email}
+                value={formState.identifier}
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
@@ -338,11 +261,7 @@ const RightSidebar: React.FC = () => {
               </button>
             </div>
             {loginError && (
-              <p className="text-red-500 text-sm mt-2">
-                {loginError.message === '[function AuthenticationError]' 
-                  ? 'Invalid email or password' 
-                  : loginError.message}
-              </p>
+              <p className="text-red-500 text-sm">{loginError.message}</p>
             )}
             <button
               type="submit"
@@ -353,8 +272,14 @@ const RightSidebar: React.FC = () => {
           </form>
         </div>
       )}
+
+      <img 
+        src={leaderboardPreview} 
+        alt="Leaderboard Preview" 
+        className="w-[400px] h-auto mt-4"
+      />
     </div>
   );
 };
 
-export default RightSidebar; 
+export default Leaderboards; 

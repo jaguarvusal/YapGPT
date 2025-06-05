@@ -1,6 +1,6 @@
 // import './App.css';
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import {
   ApolloClient,
   InMemoryCache,
@@ -11,6 +11,7 @@ import { setContext } from '@apollo/client/link/context';
 
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar';
+import LeaderboardsSidebar from './components/LeaderboardsSidebar';
 import StreakPopup from './components/StreakPopup';
 
 const httpLink = createHttpLink({
@@ -37,29 +38,37 @@ const client = new ApolloClient({
 });
 
 const App: React.FC = () => {
+  const location = useLocation();
+  const isLeaderboardsPage = location.pathname === '/leaderboards';
+  const isAuthPage = location.pathname === '/auth';
+
   return (
     <ApolloProvider client={client}>
       <div className="flex w-full h-screen bg-[#f3e0b7]">
         {/* Left Sidebar */}
-        <div className="hidden md:flex w-64 bg-[#17475c] text-black flex-col py-4 pl-6 fixed left-0 top-0 h-full border-r-4 border-dashed border-gray-700 z-10">
-          <div className="sticky top-0">
-            <Sidebar />
+        {!isAuthPage && (
+          <div className="hidden md:flex w-64 bg-[#17475c] text-black flex-col py-4 pl-6 fixed left-0 top-0 h-full border-r-4 border-dashed border-gray-700 z-10">
+            <div className="sticky top-0">
+              <Sidebar />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Main Content Area */}
-        <div className="flex-1 md:ml-64 lg:mr-[450px] bg-[#f3e0b7] h-screen">
+        <div className={`flex-1 ${!isAuthPage ? 'md:ml-64 lg:mr-[450px]' : ''} bg-[#f3e0b7] h-screen`}>
           <div id="scroll-container" className="h-full overflow-y-auto overscroll-contain hide-scrollbar">
             <Outlet />
           </div>
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden md:block w-[450px] p-4 bg-[#f3e0b7] fixed right-0 top-0 h-full z-10">
-          <div id="right-sidebar-scroll" className="h-full overflow-y-auto hide-scrollbar">
-            <RightSidebar />
+        {!isAuthPage && (
+          <div className="hidden md:block w-[450px] p-4 bg-[#f3e0b7] fixed right-0 top-0 h-full z-10">
+            <div id="right-sidebar-scroll" className="h-full overflow-y-auto hide-scrollbar">
+              {isLeaderboardsPage ? <LeaderboardsSidebar /> : <RightSidebar />}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Streak Popup */}
         <StreakPopup />

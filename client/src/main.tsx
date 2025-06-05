@@ -20,6 +20,8 @@ import Login from './pages/Login';
 import Error from './pages/Error';
 import Lesson from './components/Lesson';
 import LessonLayout from './components/LessonLayout';
+import Leaderboards from './components/Leaderboards';
+import Auth from './pages/Auth';
 
 const httpLink = new HttpLink({
   uri: 'http://localhost:3001/graphql',
@@ -87,6 +89,12 @@ const router = createBrowserRouter([
       }, {
         path: '/me',
         element: <Profile />
+      }, {
+        path: '/leaderboards',
+        element: <Leaderboards />
+      }, {
+        path: '/auth',
+        element: <Auth />
       }
     ]
   },

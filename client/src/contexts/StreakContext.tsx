@@ -22,35 +22,40 @@ export const StreakProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showStreakPopup, setShowStreakPopup] = useState(false);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
     
     if (!lastLoginDate) {
       // First time user
       setStreak(1);
-      setLastLoginDate(today);
+      setLastLoginDate(today.toISOString());
       setShowStreakPopup(true);
       localStorage.setItem('streak', '1');
-      localStorage.setItem('lastLoginDate', today);
+      localStorage.setItem('lastLoginDate', today.toISOString());
     } else {
       const lastLogin = new Date(lastLoginDate);
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
+      lastLogin.setHours(0, 0, 0, 0); // Normalize to start of day
       
-      if (lastLogin.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0); // Normalize to start of day
+      
+      // Check if last login was yesterday
+      if (lastLogin.getTime() === yesterday.getTime()) {
         // User logged in yesterday, increment streak
         const newStreak = streak + 1;
         setStreak(newStreak);
-        setLastLoginDate(today);
+        setLastLoginDate(today.toISOString());
         setShowStreakPopup(true);
         localStorage.setItem('streak', newStreak.toString());
-        localStorage.setItem('lastLoginDate', today);
-      } else if (lastLogin.toISOString().split('T')[0] !== today) {
+        localStorage.setItem('lastLoginDate', today.toISOString());
+      } else if (lastLogin.getTime() !== today.getTime()) {
         // User missed a day, reset streak
         setStreak(1);
-        setLastLoginDate(today);
+        setLastLoginDate(today.toISOString());
         setShowStreakPopup(true);
         localStorage.setItem('streak', '1');
-        localStorage.setItem('lastLoginDate', today);
+        localStorage.setItem('lastLoginDate', today.toISOString());
       }
     }
   }, []);

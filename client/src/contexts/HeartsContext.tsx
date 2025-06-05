@@ -18,9 +18,36 @@ export const HeartsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [timeUntilRegeneration, setTimeUntilRegeneration] = useState<number | null>(() => {
     const savedTimer = localStorage.getItem('heartRegenerationTimer');
     if (!savedTimer) return null;
-    const timeLeft = parseInt(savedTimer, 10) - Date.now();
-    return timeLeft > 0 ? timeLeft : null;
+    
+    const regenerationTime = parseInt(savedTimer, 10);
+    const timeLeft = regenerationTime - Date.now();
+    
+    // If regeneration time has passed, reset hearts
+    if (timeLeft <= 0) {
+      localStorage.removeItem('heartRegenerationTimer');
+      localStorage.setItem('hearts', '5');
+      return null;
+    }
+    
+    return timeLeft;
   });
+
+  // Check for regeneration on mount and when hearts change
+  useEffect(() => {
+    const savedTimer = localStorage.getItem('heartRegenerationTimer');
+    if (savedTimer) {
+      const regenerationTime = parseInt(savedTimer, 10);
+      const timeLeft = regenerationTime - Date.now();
+      
+      if (timeLeft <= 0) {
+        // Regeneration time has passed
+        setHearts(5);
+        setTimeUntilRegeneration(null);
+        localStorage.removeItem('heartRegenerationTimer');
+        localStorage.setItem('hearts', '5');
+      }
+    }
+  }, [hearts]);
 
   useEffect(() => {
     localStorage.setItem('hearts', hearts.toString());
@@ -64,6 +91,7 @@ export const HeartsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setHearts(5);
     setTimeUntilRegeneration(null);
     localStorage.removeItem('heartRegenerationTimer');
+    localStorage.setItem('hearts', '5');
   };
 
   return (
