@@ -122,7 +122,7 @@ const Leaderboards: React.FC = () => {
       <h1 className="text-3xl font-bold text-black mb-1">Unlock Leaderboards!</h1>
       <p className="text-gray-600 text-base mb-4">Create an account or login to start competing</p>
       
-      <div className="flex space-x-3 w-64">
+      <div className="flex space-x-3 w-80">
         <button 
           onClick={() => handleFormToggle('signup')}
           className="w-1/2 bg-[#e15831] text-white py-2 px-4 rounded-lg hover:bg-[#c94d2b] transition-all duration-150 text-center border-b-4 border-[#b34426] active:translate-y-1 active:border-b-0 uppercase font-medium"
@@ -139,7 +139,7 @@ const Leaderboards: React.FC = () => {
 
       {/* Signup Form */}
       {activeForm === 'signup' && (
-        <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-64 border-4 border-dashed border-[#17475c] animate-fadeIn">
+        <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-80 border-4 border-dashed border-[#17475c] animate-fadeIn">
           <h2 className="text-lg font-semibold mb-6 text-black">Create a Profile</h2>
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
@@ -226,7 +226,7 @@ const Leaderboards: React.FC = () => {
 
       {/* Login Form */}
       {activeForm === 'login' && (
-        <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-64 border-4 border-dashed border-[#17475c] animate-fadeIn">
+        <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-80 border-4 border-dashed border-[#17475c] animate-fadeIn">
           <h2 className="text-lg font-semibold mb-6 text-black">Log In</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>

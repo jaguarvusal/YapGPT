@@ -34,6 +34,27 @@ const AuthPage: React.FC = () => {
     setIsVisible(true);
   }, []);
 
+  useEffect(() => {
+    const password = formState.password;
+    const newCriteria = {
+      length: password.length >= 8,
+      lowercase: /[a-z]/.test(password),
+      uppercase: /[A-Z]/.test(password),
+    };
+    setPasswordCriteria(newCriteria);
+
+    // Set error message if password doesn't meet criteria
+    if (password && !Object.values(newCriteria).every(Boolean)) {
+      const missingCriteria = [];
+      if (!newCriteria.length) missingCriteria.push('8+ characters');
+      if (!newCriteria.lowercase) missingCriteria.push('lowercase letter');
+      if (!newCriteria.uppercase) missingCriteria.push('uppercase letter');
+      setPasswordError(`Password must contain: ${missingCriteria.join(', ')}`);
+    } else {
+      setPasswordError('');
+    }
+  }, [formState.password]);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormState({
@@ -52,6 +73,13 @@ const AuthPage: React.FC = () => {
 
   const handleSignup = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    // Check if password meets all criteria
+    if (!Object.values(passwordCriteria).every(Boolean)) {
+      setPasswordError('Please meet all password requirements');
+      return;
+    }
+
     try {
       const { data } = await addYapper({
         variables: { ...formState },
@@ -198,6 +226,25 @@ const AuthPage: React.FC = () => {
                     />
                   </button>
                 </div>
+                {/* Password Criteria Tooltip */}
+                {showPasswordTooltip && (
+                  <div className="relative w-full bg-gray-800 rounded-lg shadow-lg p-4 border-2 border-gray-600 z-50">
+                    <div className="space-y-2">
+                      <p className={`text-sm ${passwordCriteria.length ? 'text-green-500' : 'text-gray-400'}`}>
+                        {passwordCriteria.length ? '✓' : '○'} 8+ Characters
+                      </p>
+                      <p className={`text-sm ${passwordCriteria.lowercase ? 'text-green-500' : 'text-gray-400'}`}>
+                        {passwordCriteria.lowercase ? '✓' : '○'} At least one lowercase letter
+                      </p>
+                      <p className={`text-sm ${passwordCriteria.uppercase ? 'text-green-500' : 'text-gray-400'}`}>
+                        {passwordCriteria.uppercase ? '✓' : '○'} At least one uppercase letter
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {passwordError && (
+                  <p className="text-red-800 text-sm">{passwordError}</p>
+                )}
                 {signupError && (
                   <p className="text-red-500 text-sm">
                     {signupError.message === '[function AuthenticationError]' 

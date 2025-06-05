@@ -290,7 +290,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col min-h-full bg-[#f3e0b7]">
       {/* Header Section */}
-      <header className={`text-center rounded-xl p-6 shadow-lg sticky top-4 z-[2000] backdrop-blur-sm bg-opacity-80 mx-4 ${
+      <header className={`text-center rounded-xl p-6 shadow-lg sticky top-4 z-[40] backdrop-blur-sm bg-opacity-80 mx-4 ${
         currentUnit === 1 ? 'bg-orange-600' 
         : currentUnit === 2 ? 'bg-blue-800'
         : currentUnit === 3 ? 'bg-purple-800'
@@ -393,7 +393,7 @@ const Dashboard: React.FC = () => {
                           </div>
                         )}
                         {activeLevel === level && !showLessonTooltip && (
-                          <div className="animate-bounce-slow mb-1 z-50 absolute -top-12">
+                          <div className="animate-bounce-slow mb-1 z-[30] absolute -top-12">
                             <div className="relative">
                               <div className="bg-black px-4 py-2 rounded-lg text-sm border-2 border-gray-500">
                                 <span className={`font-bold tracking-wider ${
@@ -410,8 +410,8 @@ const Dashboard: React.FC = () => {
                         )}
                         {activeLevel === level && showLessonTooltip && (
                           <>
-                            <div className="absolute -inset-4 z-[1000] bg-transparent" onClick={() => setShowLessonTooltip(false)}></div>
-                            <div className="mb-1 z-[1001] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
+                            <div className="absolute -inset-4 z-[30] bg-transparent" onClick={() => setShowLessonTooltip(false)}></div>
+                            <div className="mb-1 z-[31] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
                               <div className="relative">
                                 <div className={`px-4 py-3 rounded-lg text-sm border-2 border-gray-600 min-w-[220px] ${
                                   unit === 1 ? 'bg-orange-600' 
@@ -445,8 +445,8 @@ const Dashboard: React.FC = () => {
                         )}
                         {showLockedTooltip === level && (
                           <>
-                            <div className="absolute -inset-4 z-[1000] bg-transparent" onClick={() => setShowLockedTooltip(null)}></div>
-                            <div className="mb-1 z-[1001] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
+                            <div className="absolute -inset-4 z-[30] bg-transparent" onClick={() => setShowLockedTooltip(null)}></div>
+                            <div className="mb-1 z-[31] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
                               <div className="relative">
                                 <div className="px-4 py-3 rounded-lg text-sm border-2 border-gray-600 min-w-[220px] bg-gray-800">
                                   <p className="text-gray-300 font-semibold text-base">{lessonNames[unit - 1][(level - 1) % 5]}</p>
@@ -462,8 +462,8 @@ const Dashboard: React.FC = () => {
                         )}
                         {showPracticeTooltip === level && (
                           <>
-                            <div className="absolute -inset-4 z-[1000] bg-transparent" onClick={() => setShowPracticeTooltip(null)}></div>
-                            <div className="mb-1 z-[1001] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
+                            <div className="absolute -inset-4 z-[30] bg-transparent" onClick={() => setShowPracticeTooltip(null)}></div>
+                            <div className="mb-1 z-[31] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
                               <div className="relative">
                                 <div className={`px-4 py-3 rounded-lg text-sm border-2 border-gray-600 min-w-[220px] ${
                                   unit === 1 ? 'bg-orange-600' 
@@ -496,7 +496,7 @@ const Dashboard: React.FC = () => {
                           </>
                         )}
                         {level % 5 === 1 && level !== activeLevel && level > activeLevel && (
-                          <div className="animate-bounce-slow mb-1 z-50 absolute -top-12">
+                          <div className="animate-bounce-slow mb-1 z-[30] absolute -top-12">
                             <div className="relative">
                               <div className="bg-black px-4 py-2 rounded-lg text-sm whitespace-nowrap border-2 border-gray-500">
                                 <span className={`font-bold tracking-wider ${
@@ -513,8 +513,8 @@ const Dashboard: React.FC = () => {
                         )}
                         {showSkipTooltip === level && (
                           <>
-                            <div className="absolute -inset-4 z-[1000] bg-transparent" onClick={() => setShowSkipTooltip(null)}></div>
-                            <div className="mb-1 z-[1001] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
+                            <div className="absolute -inset-4 z-[30] bg-transparent" onClick={() => setShowSkipTooltip(null)}></div>
+                            <div className="mb-1 z-[31] absolute bottom-full mb-2 pointer-events-auto" onClick={(e) => e.stopPropagation()} data-tooltip-content>
                               <div className="relative">
                                 <div className={`px-4 py-3 rounded-lg text-sm border-2 border-gray-600 min-w-[220px] ${
                                   unit === 1 ? 'bg-orange-600' 

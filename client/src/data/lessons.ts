@@ -54,6 +54,9 @@ const addRelevanceRequirements = (lessons: any[], unit: number) => {
 
 // Helper function to add charisma requirements to lessons
 const addCharismaRequirements = (lessons: any[], unit: number) => {
+  if (unit !== 5) {
+    return lessons; // Return lessons unchanged for non-unit 5 lessons
+  }
   return lessons.map((lesson) => ({
     ...lesson,
     requirements: {
