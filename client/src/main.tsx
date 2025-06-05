@@ -22,6 +22,7 @@ import Lesson from './components/Lesson';
 import LessonLayout from './components/LessonLayout';
 import Leaderboards from './components/Leaderboards';
 import Auth from './pages/Auth';
+import Flirt from './pages/Flirt';
 
 const httpLink = new HttpLink({
   uri: 'http://localhost:3001/graphql',
@@ -95,6 +96,9 @@ const router = createBrowserRouter([
       }, {
         path: '/auth',
         element: <Auth />
+      }, {
+        path: 'flirt',
+        element: <Flirt />
       }
     ]
   },

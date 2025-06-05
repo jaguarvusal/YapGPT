@@ -41,6 +41,7 @@ const App: React.FC = () => {
   const location = useLocation();
   const isLeaderboardsPage = location.pathname === '/leaderboards';
   const isAuthPage = location.pathname === '/auth';
+  const isFlirtPage = location.pathname === '/flirt';
 
   return (
     <ApolloProvider client={client}>
@@ -55,14 +56,14 @@ const App: React.FC = () => {
         )}
 
         {/* Main Content Area */}
-        <div className={`flex-1 ${!isAuthPage ? 'md:ml-64 lg:mr-[450px]' : ''} bg-[#f3e0b7] h-screen`}>
+        <div className={`flex-1 ${!isAuthPage ? (isFlirtPage ? 'md:ml-64' : 'md:ml-64 lg:mr-[450px]') : ''} bg-[#f3e0b7] h-screen`}>
           <div id="scroll-container" className="h-full overflow-y-auto overscroll-contain hide-scrollbar">
             <Outlet />
           </div>
         </div>
 
         {/* Right Sidebar */}
-        {!isAuthPage && (
+        {!isAuthPage && !isFlirtPage && (
           <div className="hidden md:block w-[450px] p-4 bg-[#f3e0b7] fixed right-0 top-0 h-full z-10">
             <div id="right-sidebar-scroll" className="h-full overflow-y-auto hide-scrollbar">
               {isLeaderboardsPage ? <LeaderboardsSidebar /> : <RightSidebar />}

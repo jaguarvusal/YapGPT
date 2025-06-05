@@ -4,12 +4,14 @@ import { useMutation } from '@apollo/client';
 import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
 import passwordIcon from '../assets 2/password.png';
+import { FaHeart } from 'react-icons/fa';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedButton, setSelectedButton] = useState<string | null>(() => {
     if (location.pathname === '/leaderboards') return 'leaderboard';
+    if (location.pathname === '/flirt') return 'flirt';
     return 'yap';
   });
   const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -45,6 +47,16 @@ const Sidebar: React.FC = () => {
       navigate('/me');
     }
   };
+
+  useEffect(() => {
+    if (location.pathname === '/leaderboards') {
+      setSelectedButton('leaderboard');
+    } else if (location.pathname === '/flirt') {
+      setSelectedButton('flirt');
+    } else if (location.pathname === '/') {
+      setSelectedButton('yap');
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const password = formState.password;
@@ -189,7 +201,7 @@ const Sidebar: React.FC = () => {
                   : ''
               }`}
               aria-label="Flirt"
-              onClick={() => setSelectedButton('flirt')}
+              onClick={() => handleNavigation('/flirt', 'flirt')}
             >
               <div className={`flex items-center space-x-4 text-2xl px-2 py-3 rounded-xl ${
                 selectedButton !== 'flirt' ? 'group-hover:bg-[#f3e0b7]' : ''

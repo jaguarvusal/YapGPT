@@ -40,10 +40,26 @@ const typeDefs = `
     sentenceCount: Int!
   }
 
+  type Character {
+    id: ID!
+    name: String!
+    personality: String!
+    voiceId: String!
+    sampleLine: String!
+  }
+
+  type FlirtResponse {
+    message: String!
+    audioUrl: String!
+    score: Int!
+    feedback: String!
+  }
+
   type Query {
     yappers: [Yapper]!
     yapper(yapperId: ID!): Yapper
     me: Yapper
+    characters: [Character]!
   }
 
   type Mutation {
@@ -54,6 +70,9 @@ const typeDefs = `
     removeYapper: Yapper
     removeSkill(skill: String!): Yapper
     uploadAudio(input: UploadAudioInput!): AudioResponse!
+    
+    generateVoiceResponse(voiceId: String!, text: String!): FlirtResponse!
+    analyzeFlirting(text: String!): FlirtResponse!
   }
 `;
 export default typeDefs;
