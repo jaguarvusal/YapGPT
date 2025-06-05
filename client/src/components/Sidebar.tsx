@@ -334,7 +334,7 @@ const Sidebar: React.FC = () => {
                       <img 
                         src={passwordIcon} 
                         alt="Toggle password visibility" 
-                        className={`w-5 h-5 transition-opacity ${showPassword ? 'opacity-50' : 'opacity-100'}`}
+                        className={`w-8 h-8 transition-opacity ${showPassword ? 'opacity-50' : 'opacity-100'}`}
                       />
                     </button>
                   </div>
@@ -395,7 +395,7 @@ const Sidebar: React.FC = () => {
                       <img 
                         src={passwordIcon} 
                         alt="Toggle password visibility" 
-                        className={`w-5 h-5 transition-opacity ${showPassword ? 'opacity-50' : 'opacity-100'}`}
+                        className={`w-8 h-8 transition-opacity ${showPassword ? 'opacity-50' : 'opacity-100'}`}
                       />
                     </button>
                   </div>
