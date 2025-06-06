@@ -5,6 +5,7 @@ import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
 import passwordIcon from '../assets 2/password.png';
 import welcomeImage from '../assets 2/welcome.png';
+import welcomebackImage from '../assets 2/welcomeback.png';
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -130,7 +131,7 @@ const AuthPage: React.FC = () => {
       {/* Left side - Welcome image */}
       <div className="hidden lg:flex w-1/2 items-center justify-center p-8">
         <img 
-          src={welcomeImage} 
+          src={activeForm === 'signup' ? welcomeImage : welcomebackImage} 
           alt="Welcome" 
           className="w-full max-w-6xl object-contain translate-x-16 border-[16px] border-black rounded-3xl"
         />
@@ -161,7 +162,7 @@ const AuthPage: React.FC = () => {
                   : 'bg-[#e15831] text-white border-[#b34426]'
               }`}
             >
-              Sign Up
+              SIGN UP
             </button>
             <button
               onClick={() => setActiveForm('login')}
@@ -171,7 +172,7 @@ const AuthPage: React.FC = () => {
                   : 'bg-[#17475c] text-white border-[#123a4c]'
               }`}
             >
-              Log In
+              LOG IN
             </button>
           </div>
 
@@ -256,7 +257,7 @@ const AuthPage: React.FC = () => {
                   type="submit"
                   className="w-full bg-white text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-100 transition-all duration-150 text-center border-b-4 border-gray-300 active:translate-y-1 active:border-b-0 uppercase font-medium"
                 >
-                  Sign Up
+                  START YAPPING!
                 </button>
               </form>
             </div>
@@ -302,9 +303,9 @@ const AuthPage: React.FC = () => {
                 )}
                 <button
                   type="submit"
-                  className="w-full bg-[#e15831] text-white py-2 px-4 rounded-lg hover:bg-[#c94d2b] transition-all duration-150 text-center border-b-4 border-[#b34426] active:translate-y-1 active:border-b-0 uppercase font-medium"
+                  className="w-full bg-white text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-100 transition-all duration-150 text-center border-b-4 border-gray-300 active:translate-y-1 active:border-b-0 uppercase font-medium"
                 >
-                  Log In
+                  START YAPPING!
                 </button>
               </form>
             </div>

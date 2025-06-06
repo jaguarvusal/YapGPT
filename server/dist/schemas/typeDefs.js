@@ -55,6 +55,24 @@ const typeDefs = `
     feedback: String!
   }
 
+  type ChatResponse {
+    response: String!
+  }
+
+  type SpeechToTextResponse {
+    text: String!
+  }
+
+  type StreamedChatResponse {
+    chunk: String!
+    isComplete: Boolean!
+  }
+
+  type StreamedVoiceResponse {
+    audioChunk: String!
+    isComplete: Boolean!
+  }
+
   type Query {
     yappers: [Yapper]!
     yapper(yapperId: ID!): Yapper
@@ -73,6 +91,15 @@ const typeDefs = `
     
     generateVoiceResponse(voiceId: String!, text: String!): FlirtResponse!
     analyzeFlirting(text: String!): FlirtResponse!
+    convertSpeechToText(audio: String!): SpeechToTextResponse!
+    generateChatResponse(message: String!, characterId: String!): ChatResponse!
+    streamChatResponse(message: String!, characterId: String!): StreamedChatResponse!
+    streamVoiceResponse(voiceId: String!, text: String!): StreamedVoiceResponse!
+  }
+
+  type Subscription {
+    chatResponseStream(message: String!, characterId: String!): StreamedChatResponse!
+    voiceResponseStream(voiceId: String!, text: String!): StreamedVoiceResponse!
   }
 `;
 export default typeDefs;
