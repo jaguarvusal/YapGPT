@@ -66,11 +66,15 @@ const typeDefs = `
   type StreamedChatResponse {
     chunk: String!
     isComplete: Boolean!
+    message: String!
+    characterId: String!
   }
 
   type StreamedVoiceResponse {
     audioChunk: String!
     isComplete: Boolean!
+    voiceId: String!
+    text: String!
   }
 
   type Query {
@@ -98,8 +102,8 @@ const typeDefs = `
   }
 
   type Subscription {
-    chatResponseStream(message: String!, characterId: String!): StreamedChatResponse!
-    voiceResponseStream(voiceId: String!, text: String!): StreamedVoiceResponse!
+    chatResponseStream(message: String!, characterId: String!): StreamedChatResponse
+    voiceResponseStream(voiceId: String!, text: String!): StreamedVoiceResponse
   }
 `;
 export default typeDefs;
