@@ -23,6 +23,15 @@ const typeDefs = `
     filename: String!
   }
 
+  input MessageInput {
+    role: String!
+    content: String!
+  }
+
+  type AnalysisResponse {
+    analysis: String!
+  }
+
   type AudioResponse {
     transcript: String!
     confidenceScore: Float!
@@ -99,6 +108,7 @@ const typeDefs = `
     generateChatResponse(message: String!, characterId: String!): ChatResponse!
     streamChatResponse(message: String!, characterId: String!): StreamedChatResponse!
     streamVoiceResponse(voiceId: String!, text: String!): StreamedVoiceResponse!
+    analyzeConversation(conversation: [MessageInput!]!): AnalysisResponse!
   }
 
   type Subscription {

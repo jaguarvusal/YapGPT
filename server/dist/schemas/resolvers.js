@@ -413,7 +413,45 @@ Text: "${text}"`;
                 console.error('Error streaming voice response:', error);
                 throw new Error(`Failed to stream voice response: ${error.message}`);
             }
-        }
+        },
+        analyzeConversation: async (_, { conversation }) => {
+            try {
+                console.log('Received conversation for analysis:', conversation);
+                const prompt = `Please analyze this flirting conversation and provide constructive feedback. Focus on:
+1. Conversation flow and engagement
+2. Response quality and appropriateness
+3. Areas for improvement
+4. Positive aspects to maintain
+
+Conversation:
+${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+Please provide a concise, encouraging analysis that helps the user improve their flirting skills.`;
+                const response = await openai.chat.completions.create({
+                    model: "gpt-4",
+                    messages: [
+                        {
+                            role: "system",
+                            content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills."
+                        },
+                        {
+                            role: "user",
+                            content: prompt
+                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 500
+                });
+                console.log('Received analysis from OpenAI:', response.choices[0].message.content);
+                return {
+                    analysis: response.choices[0].message.content || "Unable to analyze conversation."
+                };
+            }
+            catch (error) {
+                console.error('Error analyzing conversation:', error);
+                throw new Error('Failed to analyze conversation');
+            }
+        },
     },
     Subscription: {
         chatResponseStream: {
