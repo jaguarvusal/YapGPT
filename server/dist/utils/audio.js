@@ -22,9 +22,13 @@ export const saveBase64ToFile = async (base64String, filename) => {
 export const transcribeAudio = async (filePath) => {
     console.log('Starting audio transcription for file:', filePath);
     const formData = new FormData();
-    formData.append('file', fs.createReadStream(filePath));
+    formData.append('file', fs.createReadStream(filePath), {
+        filename: 'audio.webm',
+        contentType: 'audio/webm'
+    });
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'json');
+    formData.append('language', 'en');
     try {
         console.log('Sending request to OpenAI Whisper API...');
         const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
@@ -32,6 +36,8 @@ export const transcribeAudio = async (filePath) => {
                 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
                 ...formData.getHeaders()
             },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity
         });
         console.log('Received response from OpenAI Whisper:', response.data);
         return response.data.text;
