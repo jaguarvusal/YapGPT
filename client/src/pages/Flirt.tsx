@@ -19,7 +19,6 @@ import operaImage from '../assets 2/opera.png';
 import trainImage from '../assets 2/train.png';
 import SplashScreen from '../components/SplashScreen';
 import SessionAnalysis from '../components/SessionAnalysis';
-import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { CSSProperties } from 'react';
 
 // Add custom animation for reverse spin
@@ -410,6 +409,8 @@ const Flirt: React.FC = () => {
   const ERROR_THRESHOLD = 3;
   const ERROR_COOLDOWN = 5000; // 5 seconds
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [isSessionActive, setIsSessionActive] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   const { loading, error, data } = useQuery(GET_CHARACTERS);
   const [generateVoice] = useMutation(GENERATE_VOICE);

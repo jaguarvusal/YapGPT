@@ -4,7 +4,9 @@ import { saveBase64ToFile, transcribeAudio, cleanupFile } from '../utils/audio.j
 import { analyzeTranscript } from '../utils/gpt.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
-import { PubSub, withFilter } from 'graphql-subscriptions';
+import { PubSub } from 'graphql-subscriptions';
+import { withFilter } from 'graphql-subscriptions';
+import { characters, Character } from '../data/characters';
 
 dotenv.config();
 
@@ -12,34 +14,84 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const pubsub = new PubSub<{
-  CHAT_RESPONSE_STREAM: { chunk: string; isComplete: boolean; message: string; characterId: string };
-  VOICE_RESPONSE_STREAM: { audioChunk: string; isComplete: boolean; voiceId: string; text: string };
-}>();
+// Type definitions for OpenAI responses
+interface OpenAIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
 
-const characters = [
-  {
-    id: '1',
-    name: 'Élodie',
-    personality: 'Elegant and sophisticated French woman who loves intellectual discussions and art',
-    voiceId: 'xNtG3W2oqJs0cJZuTyBc',
-    sampleLine: "You know what I love? A good debate that makes me think. Care to challenge my perspective?"
-  },
-  {
-    id: '2',
-    name: 'Camila',
-    personality: 'Passionate Spanish woman with a fiery spirit and love for music and dance',
-    voiceId: 'WLjZnm4PkNmYtNCyiCq8',
-    sampleLine: "Every moment is a chance to create something beautiful. What inspires you?"
-  },
-  {
-    id: '3',
-    name: 'Anya',
-    personality: 'Mysterious and bold Russian woman who loves adventure and deep conversations',
-    voiceId: 'GCPLhb1XrVwcoKUJYcvz',
-    sampleLine: "Life's an adventure waiting to happen. Ready to make some memories?"
-  }
-];
+interface OpenAIChoice {
+  message: OpenAIMessage;
+  finish_reason: string | null;
+  index: number;
+}
+
+interface OpenAIResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: OpenAIChoice[];
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+interface ChatCompletionChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    delta: {
+      content?: string;
+      role?: string;
+    };
+    finish_reason: string | null;
+  }>;
+}
+
+// Type definitions for PubSub events
+interface ChatResponseStreamPayload {
+  chunk: string;
+  isComplete: boolean;
+  message: string;
+  characterId: string;
+}
+
+interface VoiceResponseStreamPayload {
+  audioChunk: string;
+  isComplete: boolean;
+  voiceId: string;
+  text: string;
+}
+
+// Enhanced PubSub types
+type PubSubEventMap = {
+  CHAT_RESPONSE_STREAM: ChatResponseStreamPayload;
+  VOICE_RESPONSE_STREAM: VoiceResponseStreamPayload;
+};
+
+type PubSubEventName = keyof PubSubEventMap;
+
+// Create a type-safe wrapper around PubSub
+const createTypedPubSub = () => {
+  const pubsub = new PubSub();
+
+  return {
+    publish: <T extends PubSubEventName>(eventName: T, payload: PubSubEventMap[T]): void => {
+      pubsub.publish(eventName, payload);
+    },
+    asyncIterator: <T extends PubSubEventName>(eventName: T): AsyncIterator<PubSubEventMap[T]> => {
+      return (pubsub as any).asyncIterator(eventName);
+    }
+  };
+};
+
+const pubsub = createTypedPubSub();
 
 interface Yapper {
   _id: string;
@@ -355,13 +407,18 @@ Text: "${text}"`;
           ],
           temperature: 0.7,
           max_tokens: 100
-        });
+        }) as OpenAIResponse;
 
-        let response = completion.choices[0]?.message?.content || "I'm not sure how to respond to that.";
+        const firstChoice = completion.choices[0];
+        if (!firstChoice || !firstChoice.message || !firstChoice.message.content) {
+          throw new Error("No response received from OpenAI");
+        }
+        
+        let response = firstChoice.message.content;
         
         // Ensure response is exactly one sentence
         const sentences = response.match(/[^.!?]+[.!?]+/g) || [];
-        if (sentences.length > 1) {
+        if (sentences.length > 1 && sentences[0]) {
           response = sentences[0].trim();
         }
 
@@ -375,7 +432,7 @@ Text: "${text}"`;
     },
     streamChatResponse: async (_parent: any, { message, characterId }: { message: string; characterId: string }) => {
       try {
-        const character = characters.find(c => c.id === characterId);
+        const character = characters.find((c: Character) => c.id === characterId);
         if (!character) {
           throw new Error('Character not found');
         }
@@ -397,38 +454,37 @@ Text: "${text}"`;
           temperature: 0.7,
           max_tokens: 100,
           stream: true
-        });
+        }) as AsyncIterable<ChatCompletionChunk>;
 
         let fullResponse = '';
         for await (const chunk of completion) {
-          const content = chunk.choices[0]?.delta?.content || '';
+          const firstChoice = chunk.choices[0];
+          if (!firstChoice) continue;
+          
+          const content = firstChoice.delta?.content;
           if (content) {
             fullResponse += content;
             pubsub.publish('CHAT_RESPONSE_STREAM', {
-              chatResponseStream: {
-                chunk: content,
-                isComplete: false,
-                message,
-                characterId
-              }
+              chunk: content,
+              isComplete: false,
+              message,
+              characterId
             });
           }
         }
 
         // Ensure response is exactly one sentence
         const sentences = fullResponse.match(/[^.!?]+[.!?]+/g) || [];
-        if (sentences.length > 1) {
+        if (sentences.length > 1 && sentences[0]) {
           fullResponse = sentences[0].trim();
         }
 
         // Publish the complete response
         pubsub.publish('CHAT_RESPONSE_STREAM', {
-          chatResponseStream: {
-            chunk: fullResponse,
-            isComplete: true,
-            message,
-            characterId
-          }
+          chunk: fullResponse,
+          isComplete: true,
+          message,
+          characterId
         });
 
         return {
@@ -482,12 +538,10 @@ Text: "${text}"`;
               throw new Error('No audio data received from stream');
             }
             pubsub.publish('VOICE_RESPONSE_STREAM', {
-              voiceResponseStream: {
-                audioChunk: '',
-                isComplete: true,
-                voiceId,
-                text
-              }
+              audioChunk: '',
+              isComplete: true,
+              voiceId,
+              text
             });
             break;
           }
@@ -496,12 +550,10 @@ Text: "${text}"`;
             hasPublishedChunk = true;
             const base64Audio = Buffer.from(value).toString('base64');
             pubsub.publish('VOICE_RESPONSE_STREAM', {
-              voiceResponseStream: {
-                audioChunk: base64Audio,
-                isComplete: false,
-                voiceId,
-                text
-              }
+              audioChunk: base64Audio,
+              isComplete: false,
+              voiceId,
+              text
             });
           }
         }
@@ -523,12 +575,10 @@ Text: "${text}"`;
           if (!message || !characterId) {
             throw new Error('Message and characterId are required for chat response stream');
           }
-          return pubsub.asyncIterator(['CHAT_RESPONSE_STREAM']);
+          return pubsub.asyncIterator('CHAT_RESPONSE_STREAM');
         },
-        (payload, variables) => {
-          // Only send updates for the matching message and characterId
-          return payload.chatResponseStream && 
-                 payload.chatResponseStream.chunk !== null;
+        (payload: ChatResponseStreamPayload | undefined) => {
+          return payload?.chunk !== null;
         }
       )
     },
@@ -538,12 +588,10 @@ Text: "${text}"`;
           if (!voiceId || !text) {
             throw new Error('VoiceId and text are required for voice response stream');
           }
-          return pubsub.asyncIterator(['VOICE_RESPONSE_STREAM']);
+          return pubsub.asyncIterator('VOICE_RESPONSE_STREAM');
         },
-        (payload, variables) => {
-          // Only send updates for the matching voiceId and text
-          return payload.voiceResponseStream && 
-                 payload.voiceResponseStream.audioChunk !== null;
+        (payload: VoiceResponseStreamPayload | undefined) => {
+          return payload?.audioChunk !== null;
         }
       )
     }
