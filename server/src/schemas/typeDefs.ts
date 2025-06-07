@@ -102,8 +102,8 @@ const typeDefs = `
   }
 
   type Subscription {
-    chatResponseStream(message: String!, characterId: String!): StreamedChatResponse!
-    voiceResponseStream(voiceId: String!, text: String!): StreamedVoiceResponse!
+    chatResponseStream(message: String!, characterId: String!): StreamedChatResponse
+    voiceResponseStream(voiceId: String!, text: String!): StreamedVoiceResponse
   }
 `;
 

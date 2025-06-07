@@ -863,10 +863,10 @@ const Flirt: React.FC = () => {
   // Update the voice response subscription
   const { data: voiceStreamData, error: voiceStreamError } = useSubscription(STREAM_VOICE_RESPONSE, {
     variables: {
-      voiceId: selectedCharacter?.voiceId,
+      voiceId: selectedCharacter?.voiceId || '',
       text: currentResponse
     },
-    skip: !isStreaming || !selectedCharacter || !currentResponse,
+    skip: !selectedCharacter?.voiceId || !currentResponse,
     onSubscriptionComplete: () => {
       console.log('Voice response stream complete');
       setIsStreaming(false);
@@ -996,25 +996,23 @@ const Flirt: React.FC = () => {
       return;
     }
 
-    if (voiceStreamData?.voiceResponseStream) {
+    if (voiceStreamData?.voiceResponseStream?.audioChunk) {
       const { audioChunk, isComplete } = voiceStreamData.voiceResponseStream;
-      if (audioChunk) {
-        console.log('Received voice chunk from stream');
-        playAudioChunk(audioChunk).then(() => {
-          if (isComplete) {
-            console.log('Voice stream complete');
-            setIsUserTurn(true);
-            setIsStreaming(false);
-            setIsProcessing(false);
-            if (isFlirting) {
-              startVoiceDetection();
-            }
+      console.log('Received voice chunk from stream');
+      playAudioChunk(audioChunk).then(() => {
+        if (isComplete) {
+          console.log('Voice stream complete');
+          setIsUserTurn(true);
+          setIsStreaming(false);
+          setIsProcessing(false);
+          if (isFlirting) {
+            startVoiceDetection();
           }
-        }).catch(error => {
-          console.error('Error playing audio chunk:', error);
-          handleErrorRecovery();
-        });
-      }
+        }
+      }).catch(error => {
+        console.error('Error playing audio chunk:', error);
+        handleErrorRecovery();
+      });
     }
   }, [voiceStreamData, voiceStreamError]);
 
@@ -1026,15 +1024,13 @@ const Flirt: React.FC = () => {
       return;
     }
 
-    if (chatStreamData?.chatResponseStream) {
+    if (chatStreamData?.chatResponseStream?.chunk) {
       const { chunk, isComplete } = chatStreamData.chatResponseStream;
-      if (chunk) {
-        console.log('Received chat chunk:', chunk);
-        setCurrentResponse(chunk);
-        if (isComplete) {
-          console.log('Chat stream complete');
-          logConversationMessage('character', chunk);
-        }
+      console.log('Received chat chunk:', chunk);
+      setCurrentResponse(chunk);
+      if (isComplete) {
+        console.log('Chat stream complete');
+        logConversationMessage('character', chunk);
       }
     }
   }, [chatStreamData, chatStreamError]);
