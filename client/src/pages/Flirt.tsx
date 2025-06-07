@@ -361,8 +361,7 @@ const Flirt: React.FC = () => {
   const [currentContext, setCurrentContext] = useState<LocationContext | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [isFlirting, setIsFlirting] = useState(false);
-  const [timer, setTimer] = useState(60);
-  const [zebraHeads, setZebraHeads] = useState(0);
+  const [timer, setTimer] = useState(120);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
   const [isUserTurn, setIsUserTurn] = useState(true);
@@ -605,10 +604,9 @@ Respond in 1-2 sentences maximum.`;
     }
 
     setIsFlirting(true);
-    setTimer(60);
-    setZebraHeads(0);
+    setTimer(120);
     setShowAnalysis(false);
-    setIsUserTurn(false); // Set to false when girl starts speaking
+    setIsUserTurn(false);
     setIsStreaming(true);
     setIsProcessing(false);
 
@@ -1373,7 +1371,7 @@ Respond in 1-2 sentences maximum.`;
             <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
               <div
                 className="bg-pink-500 h-3 rounded-full transition-all duration-1000"
-                style={{ width: `${(timer / 60) * 100}%` }}
+                style={{ width: `${(timer / 120) * 100}%` }}
               />
             </div>
 
@@ -1393,18 +1391,6 @@ Respond in 1-2 sentences maximum.`;
                 alt={selectedCharacter?.name}
                 className="w-48 h-48 object-cover rounded-lg"
               />
-            </div>
-
-            {/* Hearts */}
-            <div className="flex justify-center gap-2 mb-6">
-              {[...Array(3)].map((_, i) => (
-                <FaHeart
-                  key={i}
-                  className={`text-3xl ${
-                    i < zebraHeads ? 'text-pink-500' : 'text-gray-300'
-                  }`}
-                />
-              ))}
             </div>
 
             {/* Turn Indicator and End Session Button */}

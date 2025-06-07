@@ -134,22 +134,22 @@ const resolvers = {
     analyzeConversation: async (_: any, { conversation }: { conversation: Array<{ role: string; content: string }> }) => {
       try {
         const prompt = `Please analyze this flirting conversation and provide constructive feedback. Focus on:
-1. Conversation flow and engagement
-2. Response quality and appropriateness
-3. Areas for improvement
-4. Positive aspects to maintain
+1. Conversation Flow and Engagement: Analyze how the conversation flows naturally, including specific examples of good transitions and engagement from the user's messages.
+2. Response Quality and Appropriateness: Evaluate the quality of responses, including specific examples of well-crafted messages and their impact.
+3. Areas for Improvement: Identify specific areas where the user could improve, using actual examples from their messages.
+4. Positive Aspects to Maintain: Highlight specific strengths shown in the user's messages that they should continue using.
 
 Conversation:
 ${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 
-Please provide a concise, encouraging analysis that helps the user improve their flirting skills.`;
+Please provide a concise, encouraging analysis that helps the user improve their flirting skills. For each point, include at least one specific example from the user's actual messages to illustrate your feedback.`;
 
         const response = await openai.chat.completions.create({
           model: "gpt-4",
           messages: [
             {
               role: "system",
-              content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills."
+              content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills. Always include specific examples from the user's actual messages to illustrate your points."
             },
             {
               role: "user",
@@ -157,7 +157,7 @@ Please provide a concise, encouraging analysis that helps the user improve their
             }
           ],
           temperature: 0.7,
-          max_tokens: 500
+          max_tokens: 800
         });
 
         return {

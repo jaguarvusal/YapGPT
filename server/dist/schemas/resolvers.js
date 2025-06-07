@@ -417,22 +417,41 @@ Text: "${text}"`;
         analyzeConversation: async (_, { conversation }) => {
             try {
                 console.log('Received conversation for analysis:', conversation);
-                const prompt = `Please analyze this flirting conversation and provide constructive feedback. Focus on:
-1. Conversation flow and engagement
-2. Response quality and appropriateness
-3. Areas for improvement
-4. Positive aspects to maintain
+                const prompt = `Please analyze this flirting conversation and provide feedback in the following format:
+
+CHARM RATING: [Number of hearts from 1-5, written as "❤️" repeated]
+
+KEY STRENGTHS:
+- [Strength 1 with example]
+- [Strength 2 with example]
+- [Strength 3 with example]
+
+AREAS FOR IMPROVEMENT:
+- [Area 1 with specific suggestion]
+- [Area 2 with specific suggestion]
+- [Area 3 with specific suggestion]
+
+CONVERSATION FLOW:
+[Brief analysis of how the conversation progressed, including natural transitions and engagement]
+
+RESPONSE QUALITY:
+[Analysis of response appropriateness, timing, and relevance]
+
+SPECIFIC TIPS FOR NEXT TIME:
+1. [Tip 1 with example]
+2. [Tip 2 with example]
+3. [Tip 3 with example]
 
 Conversation:
 ${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 
-Please provide a concise, encouraging analysis that helps the user improve their flirting skills.`;
+Please provide constructive, encouraging feedback that helps the user improve their flirting skills.`;
                 const response = await openai.chat.completions.create({
                     model: "gpt-4",
                     messages: [
                         {
                             role: "system",
-                            content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills."
+                            content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills. Use the exact format specified, including the heart emoji for rating."
                         },
                         {
                             role: "user",
