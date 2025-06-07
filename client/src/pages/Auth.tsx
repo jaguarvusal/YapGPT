@@ -9,17 +9,20 @@ import welcomebackImage from '../assets 2/welcomeback.png';
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
-  const [isExiting, setIsExiting] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [activeForm, setActiveForm] = useState<'signup' | 'login'>('signup');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordTooltip, setShowPasswordTooltip] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [formState, setFormState] = useState({
     name: '',
     email: '',
     password: '',
     identifier: '',
   });
+  const [error, setError] = useState('');
+  const [showError, setShowError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [activeForm, setActiveForm] = useState<'signup' | 'login'>('signup');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordTooltip, setShowPasswordTooltip] = useState(false);
   const [passwordCriteria, setPasswordCriteria] = useState({
     length: false,
     lowercase: false,
@@ -115,7 +118,6 @@ const AuthPage: React.FC = () => {
   };
 
   const handleExit = () => {
-    setIsExiting(true);
     setIsVisible(false);
     setTimeout(() => {
       navigate(-1);

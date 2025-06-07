@@ -6,7 +6,7 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import { PubSub } from 'graphql-subscriptions';
 import { withFilter } from 'graphql-subscriptions';
-import { characters, Character } from '../data/characters';
+import { characters, Character } from '../data/characters.js';
 
 dotenv.config();
 

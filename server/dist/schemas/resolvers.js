@@ -4,35 +4,26 @@ import { saveBase64ToFile, transcribeAudio, cleanupFile } from '../utils/audio.j
 import { analyzeTranscript } from '../utils/gpt.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
-import { PubSub, withFilter } from 'graphql-subscriptions';
+import { PubSub } from 'graphql-subscriptions';
+import { withFilter } from 'graphql-subscriptions';
+import { characters } from '../data/characters.js';
 dotenv.config();
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
-const pubsub = new PubSub();
-const characters = [
-    {
-        id: '1',
-        name: 'Élodie',
-        personality: 'Elegant and sophisticated French woman who loves intellectual discussions and art',
-        voiceId: 'xNtG3W2oqJs0cJZuTyBc',
-        sampleLine: "You know what I love? A good debate that makes me think. Care to challenge my perspective?"
-    },
-    {
-        id: '2',
-        name: 'Camila',
-        personality: 'Passionate Spanish woman with a fiery spirit and love for music and dance',
-        voiceId: 'WLjZnm4PkNmYtNCyiCq8',
-        sampleLine: "Every moment is a chance to create something beautiful. What inspires you?"
-    },
-    {
-        id: '3',
-        name: 'Anya',
-        personality: 'Mysterious and bold Russian woman who loves adventure and deep conversations',
-        voiceId: 'GCPLhb1XrVwcoKUJYcvz',
-        sampleLine: "Life's an adventure waiting to happen. Ready to make some memories?"
-    }
-];
+// Create a type-safe wrapper around PubSub
+const createTypedPubSub = () => {
+    const pubsub = new PubSub();
+    return {
+        publish: (eventName, payload) => {
+            pubsub.publish(eventName, payload);
+        },
+        asyncIterator: (eventName) => {
+            return pubsub.asyncIterator(eventName);
+        }
+    };
+};
+const pubsub = createTypedPubSub();
 const resolvers = {
     Query: {
         yappers: async () => {
@@ -268,10 +259,14 @@ Text: "${text}"`;
                     temperature: 0.7,
                     max_tokens: 100
                 });
-                let response = completion.choices[0]?.message?.content || "I'm not sure how to respond to that.";
+                const firstChoice = completion.choices[0];
+                if (!firstChoice || !firstChoice.message || !firstChoice.message.content) {
+                    throw new Error("No response received from OpenAI");
+                }
+                let response = firstChoice.message.content;
                 // Ensure response is exactly one sentence
                 const sentences = response.match(/[^.!?]+[.!?]+/g) || [];
-                if (sentences.length > 1) {
+                if (sentences.length > 1 && sentences[0]) {
                     response = sentences[0].trim();
                 }
                 return {
@@ -285,7 +280,7 @@ Text: "${text}"`;
         },
         streamChatResponse: async (_parent, { message, characterId }) => {
             try {
-                const character = characters.find(c => c.id === characterId);
+                const character = characters.find((c) => c.id === characterId);
                 if (!character) {
                     throw new Error('Character not found');
                 }
@@ -308,32 +303,31 @@ Text: "${text}"`;
                 });
                 let fullResponse = '';
                 for await (const chunk of completion) {
-                    const content = chunk.choices[0]?.delta?.content || '';
+                    const firstChoice = chunk.choices[0];
+                    if (!firstChoice)
+                        continue;
+                    const content = firstChoice.delta?.content;
                     if (content) {
                         fullResponse += content;
                         pubsub.publish('CHAT_RESPONSE_STREAM', {
-                            chatResponseStream: {
-                                chunk: content,
-                                isComplete: false,
-                                message,
-                                characterId
-                            }
+                            chunk: content,
+                            isComplete: false,
+                            message,
+                            characterId
                         });
                     }
                 }
                 // Ensure response is exactly one sentence
                 const sentences = fullResponse.match(/[^.!?]+[.!?]+/g) || [];
-                if (sentences.length > 1) {
+                if (sentences.length > 1 && sentences[0]) {
                     fullResponse = sentences[0].trim();
                 }
                 // Publish the complete response
                 pubsub.publish('CHAT_RESPONSE_STREAM', {
-                    chatResponseStream: {
-                        chunk: fullResponse,
-                        isComplete: true,
-                        message,
-                        characterId
-                    }
+                    chunk: fullResponse,
+                    isComplete: true,
+                    message,
+                    characterId
                 });
                 return {
                     chunk: fullResponse,
@@ -382,12 +376,10 @@ Text: "${text}"`;
                             throw new Error('No audio data received from stream');
                         }
                         pubsub.publish('VOICE_RESPONSE_STREAM', {
-                            voiceResponseStream: {
-                                audioChunk: '',
-                                isComplete: true,
-                                voiceId,
-                                text
-                            }
+                            audioChunk: '',
+                            isComplete: true,
+                            voiceId,
+                            text
                         });
                         break;
                     }
@@ -395,12 +387,10 @@ Text: "${text}"`;
                         hasPublishedChunk = true;
                         const base64Audio = Buffer.from(value).toString('base64');
                         pubsub.publish('VOICE_RESPONSE_STREAM', {
-                            voiceResponseStream: {
-                                audioChunk: base64Audio,
-                                isComplete: false,
-                                voiceId,
-                                text
-                            }
+                            audioChunk: base64Audio,
+                            isComplete: false,
+                            voiceId,
+                            text
                         });
                     }
                 }
@@ -421,11 +411,9 @@ Text: "${text}"`;
                 if (!message || !characterId) {
                     throw new Error('Message and characterId are required for chat response stream');
                 }
-                return pubsub.asyncIterator(['CHAT_RESPONSE_STREAM']);
-            }, (payload, variables) => {
-                // Only send updates for the matching message and characterId
-                return payload.chatResponseStream &&
-                    payload.chatResponseStream.chunk !== null;
+                return pubsub.asyncIterator('CHAT_RESPONSE_STREAM');
+            }, (payload) => {
+                return payload?.chunk !== null;
             })
         },
         voiceResponseStream: {
@@ -433,11 +421,9 @@ Text: "${text}"`;
                 if (!voiceId || !text) {
                     throw new Error('VoiceId and text are required for voice response stream');
                 }
-                return pubsub.asyncIterator(['VOICE_RESPONSE_STREAM']);
-            }, (payload, variables) => {
-                // Only send updates for the matching voiceId and text
-                return payload.voiceResponseStream &&
-                    payload.voiceResponseStream.audioChunk !== null;
+                return pubsub.asyncIterator('VOICE_RESPONSE_STREAM');
+            }, (payload) => {
+                return payload?.audioChunk !== null;
             })
         }
     }
