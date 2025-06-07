@@ -171,12 +171,6 @@ interface LocationContext {
   backgroundImage: string;
 }
 
-interface Message {
-  text: string;
-  isUser: boolean;
-  audioUrl?: string;
-}
-
 interface ConversationMessage {
   speaker: 'user' | 'character';
   text: string;
@@ -377,40 +371,31 @@ const Flirt: React.FC = () => {
   const [timer, setTimer] = useState(60);
   const [zebraHeads, setZebraHeads] = useState(0);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [feedback, setFeedback] = useState('');
   const [showSplash, setShowSplash] = useState(false);
   const [isUserTurn, setIsUserTurn] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [currentResponse, setCurrentResponse] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [preGeneratedResponse, setPreGeneratedResponse] = useState<string>('');
   const [preGeneratedVoiceUrl, setPreGeneratedVoiceUrl] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
-  const analyzingRef = useRef(false);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [isSliding, setIsSliding] = useState(false);
-  const [isFadingIn, setIsFadingIn] = useState(false);
-  const [showProgress, setShowProgress] = useState(false);
-  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
   const cardRef = useRef<HTMLDivElement>(null);
-  const [showProgressOverlay, setShowProgressOverlay] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
   const [lastErrorTime, setLastErrorTime] = useState(0);
   const ERROR_THRESHOLD = 3;
   const ERROR_COOLDOWN = 5000; // 5 seconds
-  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [showProgressOverlay, setShowProgressOverlay] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [isFadingIn, setIsFadingIn] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   const { loading, error, data } = useQuery(GET_CHARACTERS);
   const [generateVoice] = useMutation(GENERATE_VOICE);
@@ -428,11 +413,6 @@ const Flirt: React.FC = () => {
     }
     return () => clearInterval(interval);
   }, [isFlirting, timer]);
-
-  // Add useEffect to track state changes
-  useEffect(() => {
-    console.log('isAnalyzing changed to:', isAnalyzing);
-  }, [isAnalyzing]);
 
   const playVoiceSample = async (character: Character) => {
     try {
@@ -606,7 +586,6 @@ const Flirt: React.FC = () => {
     setTimer(60);
     setZebraHeads(0);
     setShowAnalysis(false);
-    setFeedback('');
     setIsUserTurn(false); // Set to false when girl starts speaking
     setIsStreaming(true);
     setIsProcessing(false); // Ensure processing is false when starting

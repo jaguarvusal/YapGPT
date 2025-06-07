@@ -143,11 +143,6 @@ const Dashboard: React.FC = () => {
     setCurrentUnit(Math.ceil(activeLevel / 5));
   }, [isInitialized, activeLevel]);
 
-  // Helper function to get the actual level number within a unit (1-5)
-  const getLevelInUnit = (level: number) => {
-    return ((level - 1) % 5) + 1;
-  };
-
   useEffect(() => {
     const handleLevelCompleted = (event: CustomEvent) => {
       const { nextLevel } = event.detail;
