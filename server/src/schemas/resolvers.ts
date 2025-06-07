@@ -132,6 +132,15 @@ interface UploadAudioInput {
   filename: string;
 }
 
+interface MessageInput {
+  role: string;
+  content: string;
+}
+
+interface AnalyzeConversationArgs {
+  conversation: MessageInput[];
+}
+
 const resolvers = {
   Query: {
     yappers: async (): Promise<Yapper[]> => {
@@ -577,12 +586,12 @@ Text: "${text}"`;
         throw new Error(`Failed to stream voice response: ${error.message}`);
       }
     },
-    analyzeConversation: async (_, { conversation }) => {
+    analyzeConversation: async (_: unknown, { conversation }: AnalyzeConversationArgs) => {
       try {
         console.log('Received conversation for analysis:', conversation);
         
         // Check if there are any user messages
-        const hasUserMessages = conversation.some(msg => msg.role === 'user');
+        const hasUserMessages = conversation.some((msg: MessageInput) => msg.role === 'user');
         
         const prompt = hasUserMessages ? 
           `Hey there! I just watched your flirting session, and I'd love to share my thoughts with you. Please structure your response EXACTLY like this, with all five sections:
