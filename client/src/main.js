@@ -19,7 +19,7 @@ import Leaderboards from './components/Leaderboards.tsx';
 import Auth from './pages/Auth.tsx';
 import Flirt from './pages/Flirt.tsx';
 const httpLink = new HttpLink({
-    uri: 'http://localhost:3001/graphql',
+    uri: import.meta.env.VITE_SERVER_URL || 'http://localhost:3001/graphql',
     credentials: 'include',
 });
 const authLink = setContext((_, { headers }) => {

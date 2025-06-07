@@ -7,7 +7,8 @@ import RightSidebar from './components/RightSidebar.tsx';
 import LeaderboardsSidebar from './components/LeaderboardsSidebar.tsx';
 import StreakPopup from './components/StreakPopup.tsx';
 const httpLink = createHttpLink({
-    uri: 'http://localhost:3001/graphql',
+    uri: import.meta.env.VITE_SERVER_URL || 'http://localhost:3001/graphql',
+    credentials: 'include'
 });
 // Construct request middleware that will attach the JWT token to every request as an `authorization` header
 const authLink = setContext((_, { headers }) => {
