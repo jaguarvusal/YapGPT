@@ -66,8 +66,8 @@ const Lesson: React.FC = () => {
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const progressIntervalRef = useRef<number | null>(null);
-  const countdownIntervalRef = useRef<number | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout>();
+  const countdownIntervalRef = useRef<NodeJS.Timeout>();
   const lessonDataRef = useRef<Lesson | null>(null);
 
   const [uploadAudio, { loading: uploadLoading }] = useMutation<
