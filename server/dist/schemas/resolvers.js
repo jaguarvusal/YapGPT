@@ -149,6 +149,9 @@ const resolvers = {
         },
         generateVoiceResponse: async (_parent, { voiceId, text }) => {
             try {
+                if (!voiceId || !text) {
+                    throw new Error('VoiceId and text are required for voice generation');
+                }
                 const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
                     method: 'POST',
                     headers: {
@@ -164,10 +167,18 @@ const resolvers = {
                     }),
                 });
                 if (!response.ok) {
-                    throw new Error('Failed to generate voice response');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('ElevenLabs API error:', errorData);
+                    throw new Error(`Failed to generate voice response: ${response.status} ${response.statusText}`);
                 }
                 const arrayBuffer = await response.arrayBuffer();
+                if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+                    throw new Error('Received empty audio response');
+                }
                 const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+                if (!base64Audio) {
+                    throw new Error('Failed to convert audio to base64');
+                }
                 return {
                     message: text,
                     audioUrl: base64Audio,
@@ -177,7 +188,7 @@ const resolvers = {
             }
             catch (error) {
                 console.error('Error generating voice response:', error);
-                throw new Error('Failed to generate voice response');
+                throw new Error(`Failed to generate voice response: ${error.message}`);
             }
         },
         analyzeFlirting: async (_parent, { text }) => {
@@ -241,8 +252,12 @@ Text: "${text}"`;
                 }
                 // Create a system message that defines the character's personality and context
                 const systemMessage = `You are ${character.name}, ${character.personality}. 
-        Respond naturally and in character. Keep responses concise and engaging. 
-        Your goal is to have a natural conversation while maintaining your character's personality.`;
+        You MUST respond with EXACTLY ONE sentence, no longer than 20 words.
+        Keep your response natural and in character, but strictly limit it to one complete sentence.
+        Your goal is to have a natural conversation while maintaining your character's personality.
+        CRITICAL: You MUST ALWAYS respond in ENGLISH ONLY, regardless of your character's background or nationality.
+        Even if your character is from a non-English speaking country, you MUST respond in English.
+        For introductions, make them contextually relevant to the current scene but keep them concise.`;
                 // Generate response using GPT-4
                 const completion = await openai.chat.completions.create({
                     model: "gpt-4",
@@ -251,9 +266,14 @@ Text: "${text}"`;
                         { role: "user", content: message }
                     ],
                     temperature: 0.7,
-                    max_tokens: 150
+                    max_tokens: 100
                 });
-                const response = completion.choices[0]?.message?.content || "I'm not sure how to respond to that.";
+                let response = completion.choices[0]?.message?.content || "I'm not sure how to respond to that.";
+                // Ensure response is exactly one sentence
+                const sentences = response.match(/[^.!?]+[.!?]+/g) || [];
+                if (sentences.length > 1) {
+                    response = sentences[0].trim();
+                }
                 return {
                     response
                 };
@@ -270,8 +290,12 @@ Text: "${text}"`;
                     throw new Error('Character not found');
                 }
                 const systemMessage = `You are ${character.name}, ${character.personality}. 
-        Respond naturally and in character. Keep responses concise and engaging. 
-        Your goal is to have a natural conversation while maintaining your character's personality.`;
+        You MUST respond with EXACTLY ONE sentence, no longer than 20 words.
+        Keep your response natural and in character, but strictly limit it to one complete sentence.
+        Your goal is to have a natural conversation while maintaining your character's personality.
+        CRITICAL: You MUST ALWAYS respond in ENGLISH ONLY, regardless of your character's background or nationality.
+        Even if your character is from a non-English speaking country, you MUST respond in English.
+        For introductions, make them contextually relevant to the current scene but keep them concise.`;
                 const completion = await openai.chat.completions.create({
                     model: "gpt-4",
                     messages: [
@@ -279,7 +303,7 @@ Text: "${text}"`;
                         { role: "user", content: message }
                     ],
                     temperature: 0.7,
-                    max_tokens: 150,
+                    max_tokens: 100,
                     stream: true
                 });
                 let fullResponse = '';
@@ -290,15 +314,25 @@ Text: "${text}"`;
                         pubsub.publish('CHAT_RESPONSE_STREAM', {
                             chatResponseStream: {
                                 chunk: content,
-                                isComplete: false
+                                isComplete: false,
+                                message,
+                                characterId
                             }
                         });
                     }
                 }
+                // Ensure response is exactly one sentence
+                const sentences = fullResponse.match(/[^.!?]+[.!?]+/g) || [];
+                if (sentences.length > 1) {
+                    fullResponse = sentences[0].trim();
+                }
+                // Publish the complete response
                 pubsub.publish('CHAT_RESPONSE_STREAM', {
                     chatResponseStream: {
-                        chunk: '',
-                        isComplete: true
+                        chunk: fullResponse,
+                        isComplete: true,
+                        message,
+                        characterId
                     }
                 });
                 return {
@@ -313,6 +347,9 @@ Text: "${text}"`;
         },
         streamVoiceResponse: async (_parent, { voiceId, text }) => {
             try {
+                if (!voiceId || !text) {
+                    throw new Error('VoiceId and text are required for voice streaming');
+                }
                 const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
                     method: 'POST',
                     headers: {
@@ -328,30 +365,44 @@ Text: "${text}"`;
                     }),
                 });
                 if (!response.ok) {
-                    throw new Error('Failed to generate voice response');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('ElevenLabs API error:', errorData);
+                    throw new Error(`Failed to generate voice response: ${response.status} ${response.statusText}`);
                 }
                 const reader = response.body?.getReader();
                 if (!reader) {
                     throw new Error('Failed to get response reader');
                 }
+                let hasPublishedChunk = false;
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) {
+                        if (!hasPublishedChunk) {
+                            // If we haven't published any chunks, something went wrong
+                            throw new Error('No audio data received from stream');
+                        }
                         pubsub.publish('VOICE_RESPONSE_STREAM', {
                             voiceResponseStream: {
                                 audioChunk: '',
-                                isComplete: true
+                                isComplete: true,
+                                voiceId,
+                                text
                             }
                         });
                         break;
                     }
-                    const base64Chunk = Buffer.from(value).toString('base64');
-                    pubsub.publish('VOICE_RESPONSE_STREAM', {
-                        voiceResponseStream: {
-                            audioChunk: base64Chunk,
-                            isComplete: false
-                        }
-                    });
+                    if (value && value.length > 0) {
+                        hasPublishedChunk = true;
+                        const base64Audio = Buffer.from(value).toString('base64');
+                        pubsub.publish('VOICE_RESPONSE_STREAM', {
+                            voiceResponseStream: {
+                                audioChunk: base64Audio,
+                                isComplete: false,
+                                voiceId,
+                                text
+                            }
+                        });
+                    }
                 }
                 return {
                     audioChunk: '',
@@ -366,12 +417,28 @@ Text: "${text}"`;
     },
     Subscription: {
         chatResponseStream: {
-            subscribe: withFilter(() => pubsub.asyncIterator(['CHAT_RESPONSE_STREAM']), () => true // You can add filtering logic here if needed
-            )
+            subscribe: withFilter((_, { message, characterId }) => {
+                if (!message || !characterId) {
+                    throw new Error('Message and characterId are required for chat response stream');
+                }
+                return pubsub.asyncIterator(['CHAT_RESPONSE_STREAM']);
+            }, (payload, variables) => {
+                // Only send updates for the matching message and characterId
+                return payload.chatResponseStream &&
+                    payload.chatResponseStream.chunk !== null;
+            })
         },
         voiceResponseStream: {
-            subscribe: withFilter(() => pubsub.asyncIterator(['VOICE_RESPONSE_STREAM']), () => true // You can add filtering logic here if needed
-            )
+            subscribe: withFilter((_, { voiceId, text }) => {
+                if (!voiceId || !text) {
+                    throw new Error('VoiceId and text are required for voice response stream');
+                }
+                return pubsub.asyncIterator(['VOICE_RESPONSE_STREAM']);
+            }, (payload, variables) => {
+                // Only send updates for the matching voiceId and text
+                return payload.voiceResponseStream &&
+                    payload.voiceResponseStream.audioChunk !== null;
+            })
         }
     }
 };

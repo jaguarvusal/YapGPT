@@ -12,7 +12,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const pubsub = new PubSub();
+const pubsub = new PubSub<{
+  CHAT_RESPONSE_STREAM: { chunk: string; isComplete: boolean; message: string; characterId: string };
+  VOICE_RESPONSE_STREAM: { audioChunk: string; isComplete: boolean; voiceId: string; text: string };
+}>();
 
 const characters = [
   {
