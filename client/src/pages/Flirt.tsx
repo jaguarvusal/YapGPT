@@ -998,21 +998,21 @@ const Flirt: React.FC = () => {
 
     if (voiceStreamData?.voiceResponseStream?.audioChunk) {
       const { audioChunk, isComplete } = voiceStreamData.voiceResponseStream;
-      console.log('Received voice chunk from stream');
-      playAudioChunk(audioChunk).then(() => {
-        if (isComplete) {
-          console.log('Voice stream complete');
-          setIsUserTurn(true);
-          setIsStreaming(false);
-          setIsProcessing(false);
-          if (isFlirting) {
-            startVoiceDetection();
+        console.log('Received voice chunk from stream');
+        playAudioChunk(audioChunk).then(() => {
+          if (isComplete) {
+            console.log('Voice stream complete');
+            setIsUserTurn(true);
+            setIsStreaming(false);
+            setIsProcessing(false);
+            if (isFlirting) {
+              startVoiceDetection();
+            }
           }
-        }
-      }).catch(error => {
-        console.error('Error playing audio chunk:', error);
-        handleErrorRecovery();
-      });
+        }).catch(error => {
+          console.error('Error playing audio chunk:', error);
+          handleErrorRecovery();
+        });
     }
   }, [voiceStreamData, voiceStreamError]);
 
@@ -1026,11 +1026,11 @@ const Flirt: React.FC = () => {
 
     if (chatStreamData?.chatResponseStream?.chunk) {
       const { chunk, isComplete } = chatStreamData.chatResponseStream;
-      console.log('Received chat chunk:', chunk);
-      setCurrentResponse(chunk);
-      if (isComplete) {
-        console.log('Chat stream complete');
-        logConversationMessage('character', chunk);
+        console.log('Received chat chunk:', chunk);
+        setCurrentResponse(chunk);
+        if (isComplete) {
+          console.log('Chat stream complete');
+          logConversationMessage('character', chunk);
       }
     }
   }, [chatStreamData, chatStreamError]);
