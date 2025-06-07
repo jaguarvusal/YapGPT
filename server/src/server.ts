@@ -7,6 +7,7 @@ import { ApolloServer } from '@apollo/server';// Note: Import from @apollo/serve
 import { expressMiddleware } from '@apollo/server/express4';
 import { typeDefs, resolvers } from './schemas/index.js';
 import { authenticateToken } from './utils/auth.js';
+import cors from 'cors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,8 +24,14 @@ const startApolloServer = async () => {
   const PORT = process.env.PORT || 3001;
   const app = express();
 
+  // Enable CORS
+  app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }));
+
   app.use(express.urlencoded({ extended: false }));
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
 
   app.use('/graphql', expressMiddleware(server as any,
     {

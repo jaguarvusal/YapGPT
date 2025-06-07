@@ -5,7 +5,8 @@ interface ExtendedJwt extends JwtPayload {
     username:string,
     email:string,
     _id:string
-  }
+  },
+  iat: number
 };
 
 class AuthService {

@@ -17,15 +17,24 @@
   "license": "ISC",
   "dependencies": {
     "@apollo/server": "^4.10.4",
+    "axios": "^1.6.7",
     "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "form-data": "^4.0.0",
+    "fs-extra": "^11.2.0",
     "graphql": "^16.9.0",
+    "graphql-subscriptions": "^3.0.0",
+    "graphql-upload": "^17.0.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^8.4.3"
+    "mongoose": "^8.4.3",
+    "openai": "^5.1.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/fs-extra": "^11.0.4",
     "@types/jsonwebtoken": "^9.0.6",
     "nodemon": "^3.1.0",
     "typescript": "^5.4.5"

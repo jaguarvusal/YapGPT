@@ -1,0 +1,16 @@
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import LessonHearts from './LessonHearts';
+
+const LessonLayout: React.FC = () => {
+  return (
+    <div className="w-full h-screen bg-[#f3e0b7]">
+      <LessonHearts />
+      <div className="h-full overflow-y-auto overscroll-contain hide-scrollbar">
+        <Outlet />
+      </div>
+    </div>
+  );
+};
+
+export default LessonLayout; 

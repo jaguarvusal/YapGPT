@@ -15,7 +15,7 @@
     font-family: 'Fredoka', system-ui, sans-serif;
   }
   body {
-    background-color: rgb(31, 41, 55); /* This matches bg-gray-800 */
+    background-color: #f3e0b7;
     min-height: 100vh;
   }
 } 

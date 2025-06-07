@@ -13,8 +13,8 @@ export const ADD_YAPPER = gql`
 `;
 
 export const LOGIN_USER = gql`
-  mutation login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
+  mutation login($identifier: String!, $password: String!) {
+    login(identifier: $identifier, password: $password) {
       token
       yapper {
         _id
@@ -30,6 +30,25 @@ export const REMOVE_SKILL = gql`
       _id
       name
       skills
+    }
+  }
+`;
+
+export const UPLOAD_AUDIO = gql`
+  mutation UploadAudio($input: UploadAudioInput!) {
+    uploadAudio(input: $input) {
+      transcript
+      confidenceScore
+      fillerWordCount
+      grammarScore
+      wordChoiceScore
+      conciseness {
+        wordCount
+        sentenceCount
+      }
+      charismaScore
+      relevanceScore
+      suggestions
     }
   }
 `;
