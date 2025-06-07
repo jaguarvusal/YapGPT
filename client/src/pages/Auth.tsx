@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
-import passwordIcon from '../assets 2/password.png';
-import welcomeImage from '../assets 2/welcome.png';
-import welcomebackImage from '../assets 2/welcomeback.png';
+import passwordIcon from "/assets/password.png";
+import welcomeImage from "/assets/welcome.png";
+import welcomebackImage from "/assets/welcomeback.png";
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();

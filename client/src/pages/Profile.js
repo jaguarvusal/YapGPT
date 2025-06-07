@@ -3,7 +3,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import { QUERY_SINGLE_YAPPER, QUERY_ME } from '../utils/queries';
 import Auth from '../utils/auth';
-import SplashScreen from '../components/SplashScreen';
+import SplashScreen from '../components/SplashScreen.tsx';
 const Profile = () => {
     const { yapperId } = useParams();
     // If there is no `yapperId` in the URL as a parameter, execute the `QUERY_ME` query instead for the logged in user's information

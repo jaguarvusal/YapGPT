@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@apollo/client';
 import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
-import passwordIcon from '../assets 2/password.png';
-import leaderboardPreview from '../assets 2/leaderboardpreview.png';
+import passwordIcon from '/assets/password.png';
+import leaderboardPreview from '/assets/leaderboardpreview.png';
 
 const Leaderboards: React.FC = () => {
   const [activeForm, setActiveForm] = useState<'signup' | 'login' | null>(null);
@@ -115,7 +115,7 @@ const Leaderboards: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col items-center pt-4">
       <img 
-        src="/src/assets 2/medals.png" 
+        src="/assets/medals.png" 
         alt="Medals" 
         className="w-64 h-auto mb-2"
       />

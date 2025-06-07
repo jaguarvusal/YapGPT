@@ -396,7 +396,12 @@ Text: "${text}"`;
         Your goal is to have a natural conversation while maintaining your character's personality.
         CRITICAL: You MUST ALWAYS respond in ENGLISH ONLY, regardless of your character's background or nationality.
         Even if your character is from a non-English speaking country, you MUST respond in English.
-        For introductions, make them contextually relevant to the current scene but keep them concise.`;
+        For introductions, make them contextually relevant to the current scene but keep them concise.
+        IMPORTANT: Your responses should feel natural and unforced - avoid being overly flirty or cheesy.
+        When responding to the scene context, acknowledge the specific situation and make it feel like a natural continuation of that moment.
+        Your responses should reflect your character's personality while staying grounded in the current situation.
+        CRITICAL: Pay attention to who is doing what in the scene - don't reverse roles or actions. For example, if you're offering help with spicy food, don't thank the other person for helping you.
+        Make sure your response matches the exact situation described in the context, maintaining the correct roles and actions.`;
 
         // Generate response using GPT-4
         const completion = await openai.chat.completions.create({
@@ -443,7 +448,12 @@ Text: "${text}"`;
         Your goal is to have a natural conversation while maintaining your character's personality.
         CRITICAL: You MUST ALWAYS respond in ENGLISH ONLY, regardless of your character's background or nationality.
         Even if your character is from a non-English speaking country, you MUST respond in English.
-        For introductions, make them contextually relevant to the current scene but keep them concise.`;
+        For introductions, make them contextually relevant to the current scene but keep them concise.
+        IMPORTANT: Your responses should feel natural and unforced - avoid being overly flirty or cheesy.
+        When responding to the scene context, acknowledge the specific situation and make it feel like a natural continuation of that moment.
+        Your responses should reflect your character's personality while staying grounded in the current situation.
+        CRITICAL: Pay attention to who is doing what in the scene - don't reverse roles or actions. For example, if you're offering help with spicy food, don't thank the other person for helping you.
+        Make sure your response matches the exact situation described in the context, maintaining the correct roles and actions.`;
 
         const completion = await openai.chat.completions.create({
           model: "gpt-4",
@@ -566,7 +576,48 @@ Text: "${text}"`;
         console.error('Error streaming voice response:', error);
         throw new Error(`Failed to stream voice response: ${error.message}`);
       }
-    }
+    },
+    analyzeConversation: async (_: any, { conversation }: { conversation: Array<{ role: string; content: string }> }) => {
+      try {
+        console.log('Received conversation for analysis:', conversation);
+        
+        const prompt = `Please analyze this flirting conversation and provide constructive feedback. Focus on:
+1. Conversation flow and engagement
+2. Response quality and appropriateness
+3. Areas for improvement
+4. Positive aspects to maintain
+
+Conversation:
+${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+Please provide a concise, encouraging analysis that helps the user improve their flirting skills.`;
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        });
+
+        console.log('Received analysis from OpenAI:', response.choices[0].message.content);
+        
+        return {
+          analysis: response.choices[0].message.content || "Unable to analyze conversation."
+        };
+      } catch (error) {
+        console.error('Error analyzing conversation:', error);
+        throw new Error('Failed to analyze conversation');
+      }
+    },
   },
   Subscription: {
     chatResponseStream: {

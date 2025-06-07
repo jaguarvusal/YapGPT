@@ -80,7 +80,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onClick }) => {
           {/* Spinning favicon */}
           <div className="absolute inset-0 flex items-center justify-center">
             <img
-              src={favicon}
+              src="/assets/favicon.png"
               alt="Loading"
               className="w-24 h-24 animate-spin"
             />

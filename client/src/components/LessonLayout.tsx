@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import LessonHearts from './LessonHearts';
+import LessonHearts from './LessonHearts.tsx';
 
 const LessonLayout: React.FC = () => {
   return (

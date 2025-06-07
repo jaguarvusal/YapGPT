@@ -3,23 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useSubscription } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { FaPlay, FaStop, FaHeart, FaRedo, FaArrowLeft, FaMicrophone, FaMicrophoneSlash } from 'react-icons/fa';
-import frenchImage from '../assets 2/french1.png';
-import spanishImage from '../assets 2/spanish 1.png';
-import russianImage from '../assets 2/russian1.png';
-import kissImage from '../assets 2/kiss.png';
-import loveImage from '../assets 2/love.png';
-import locationImage from '../assets 2/location.png';
-import artGalleryImage from '../assets 2/artgallery.png';
-import cafeImage from '../assets 2/cafe.png';
-import louvreImage from '../assets 2/louvre.png';
-import tavernImage from '../assets 2/tavern.png';
-import tacoImage from '../assets 2/taco.png';
-import festivalImage from '../assets 2/festival.png';
-import marketImage from '../assets 2/market.png';
-import operaImage from '../assets 2/opera.png';
-import trainImage from '../assets 2/train.png';
-import SplashScreen from '../components/SplashScreen';
-import SessionAnalysis from '../components/SessionAnalysis';
+import SplashScreen from '../components/SplashScreen.tsx';
+import SessionAnalysis from '../components/SessionAnalysis.tsx';
 // Add custom animation for reverse spin
 const style = document.createElement('style');
 style.textContent = `
@@ -153,60 +138,60 @@ const locationContexts = {
         {
             title: "Art Gallery Opening",
             description: "As you admire a contemporary piece, you notice Elodie standing beside you, her elegant silhouette perfectly framed against the artwork. She catches your eye and offers a sophisticated smile, commenting on the artist's use of color. The soft lighting and classical music create an intimate atmosphere as you begin to discuss the exhibition.",
-            image: frenchImage,
-            backgroundImage: artGalleryImage
+            image: "/assets/french1.png",
+            backgroundImage: "/assets/artgallery.png"
         },
         {
             title: "Café de Flore",
             description: "You're seated at a corner table when Elodie enters, her presence commanding attention. As she passes your table, she accidentally drops her book of French poetry. You quickly pick it up, and she thanks you with a charming smile, asking if you'd like to join her for a coffee and discuss the works of Baudelaire.",
-            image: frenchImage,
-            backgroundImage: cafeImage
+            image: "/assets/french1.png",
+            backgroundImage: "/assets/cafe.png"
         },
         {
             title: "Louvre Museum",
             description: "While admiring the Mona Lisa, you notice Elodie standing next to you, lost in thought. As the crowd shifts, you both find yourselves at the perfect angle to view the painting. She turns to you with an intellectual spark in her eyes and asks for your interpretation of the famous smile, beginning a fascinating conversation about art and philosophy.",
-            image: frenchImage,
-            backgroundImage: louvreImage
+            image: "/assets/french1.png",
+            backgroundImage: "/assets/louvre.png"
         }
     ],
     '2': [
         {
             title: "Flamenco Night",
             description: "The rhythm of the guitar fills the air as Camila takes the dance floor. Her passionate movements catch your eye, and during a particularly energetic spin, she accidentally bumps into you. Instead of apologizing, she grabs your hand with a fiery smile, pulling you into the dance, her energy infectious as she teaches you the basic steps.",
-            image: spanishImage,
-            backgroundImage: tavernImage
+            image: "/assets/spanish 1.png",
+            backgroundImage: "/assets/tavern.png"
         },
         {
             title: "Beachside Taco Truck",
             description: "As you're enjoying the sunset, Camila approaches the taco truck next to you. She notices you're struggling with the spicy salsa and offers you her secret remedy - a special lime and salt combination. Her laughter is as warm as the evening breeze as she shares stories about her grandmother's recipes and love for Latin music.",
-            image: spanishImage,
-            backgroundImage: tacoImage
+            image: "/assets/spanish 1.png",
+            backgroundImage: "/assets/taco.png"
         },
         {
             title: "Music Festival",
-            description: "The vibrant beats of Latin music fill the air when Camila, dancing with infectious energy, accidentally spills her drink on your shirt. Instead of a simple apology, she insists on buying you a new drink and teaching you the proper way to dance to the rhythm. Her passion for music and dance is evident as she guides you through the steps.",
-            image: spanishImage,
-            backgroundImage: festivalImage
+            description: "The vibrant energy of the festival surrounds you as Camila dances nearby, her movements perfectly synchronized with the Latin rhythms. During a particularly catchy song, she catches your eye and waves you over, her smile as bright as the stage lights. She offers you a pair of maracas, inviting you to join in the celebration of music and culture.",
+            image: "/assets/spanish 1.png",
+            backgroundImage: "/assets/festival.png"
         }
     ],
     '3': [
         {
             title: "Winter Market",
             description: "Amidst the falling snow, you notice Anya examining a handcrafted matryoshka doll. As you approach the same vendor, she turns to you with a mysterious smile, asking if you believe in the traditional Russian superstition about the dolls bringing good luck in love. Her eyes sparkle with adventure as she shares the story behind the intricate craftsmanship.",
-            image: russianImage,
-            backgroundImage: marketImage
+            image: "/assets/russian1.png",
+            backgroundImage: "/assets/market.png"
         },
         {
             title: "Ballet Performance",
             description: "During the intermission at the Bolshoi Theatre, you find yourself next to Anya at the refreshments counter. She notices your program and strikes up a conversation about the performance, her knowledge of ballet history and technique revealing a deep appreciation for the arts. Her mysterious aura is enhanced by the grandeur of the theatre.",
-            image: russianImage,
-            backgroundImage: operaImage
+            image: "/assets/russian1.png",
+            backgroundImage: "/assets/opera.png"
         },
         {
             title: "Trans-Siberian Train",
             description: "As the train winds through the vast Russian landscape, you find yourself sharing a compartment with Anya. She's reading a book of Russian poetry when the train hits a bump, causing her to drop her bookmark. You pick it up, and she thanks you with a bold smile, asking if you'd like to hear the poem she was reading, her adventurous spirit evident in her storytelling.",
-            image: russianImage,
-            backgroundImage: trainImage
+            image: "/assets/russian1.png",
+            backgroundImage: "/assets/train.png"
         }
     ]
 };
@@ -376,7 +361,12 @@ const Flirt = () => {
         const context = getRandomContext(character.id);
         setCurrentContext(context);
         // Pre-generate the initial response and voice
-        const prompt = `You are ${character.name}, ${character.personality}. You are at ${context.title}. The following is the scene: \"${context.description}\". Greet the person in front of you and say something engaging, in 2 sentences or less. Stay in character.`;
+        const prompt = `You are ${character.name}, ${character.personality}. You are at ${context.title}. The following is the scene: "${context.description}". 
+Based on this specific situation, respond naturally as if you're continuing the moment described. 
+Pay close attention to who is doing what in the scene - maintain the correct roles and actions.
+For example, if you're offering help with spicy food, don't thank the other person for helping you.
+Keep your response authentic to your character while staying grounded in the current situation.
+Respond in 1-2 sentences maximum.`;
         try {
             const { data: chatData } = await generateChatResponse({
                 variables: {
@@ -416,7 +406,12 @@ const Flirt = () => {
             const newContext = getRandomContext(selectedCharacter.id, currentContext?.title);
             setCurrentContext(newContext);
             // Re-generate response for new context
-            const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${newContext.title}. The following is the scene: \"${newContext.description}\". Greet the person in front of you and say something engaging, in 2 sentences or less. Stay in character.`;
+            const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${newContext.title}. The following is the scene: "${newContext.description}". 
+Based on this specific situation, respond naturally as if you're continuing the moment described. 
+Pay close attention to who is doing what in the scene - maintain the correct roles and actions.
+For example, if you're offering help with spicy food, don't thank the other person for helping you.
+Keep your response authentic to your character while staying grounded in the current situation.
+Respond in 1-2 sentences maximum.`;
             try {
                 const { data: chatData } = await generateChatResponse({
                     variables: {
@@ -455,7 +450,12 @@ const Flirt = () => {
         if (!preGeneratedVoiceUrl || !preGeneratedResponse) {
             setShowSplash(true);
             if (selectedCharacter && currentContext) {
-                const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${currentContext.title}. The following is the scene: \"${currentContext.description}\". Greet the person in front of you and say something engaging, in 2 sentences or less. Stay in character.`;
+                const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${currentContext.title}. The following is the scene: "${currentContext.description}". 
+Based on this specific situation, respond naturally as if you're continuing the moment described. 
+Pay close attention to who is doing what in the scene - maintain the correct roles and actions.
+For example, if you're offering help with spicy food, don't thank the other person for helping you.
+Keep your response authentic to your character while staying grounded in the current situation.
+Respond in 1-2 sentences maximum.`;
                 try {
                     const { data: chatData } = await generateChatResponse({
                         variables: {
@@ -1040,7 +1040,7 @@ const Flirt = () => {
     }
     if (error)
         return _jsxs("div", { children: ["Error: ", error.message] });
-    return (_jsxs("div", { className: "min-h-screen bg-[#f3e0b7] p-8", children: [_jsxs("div", { className: "max-w-4xl mx-auto flex items-center justify-center min-h-[calc(100vh-4rem)] relative", children: [showProgressOverlay && _jsx(AnalysisProgress, {}), !selectedCharacter ? (_jsxs("div", { className: "w-full", children: [_jsx("div", { className: "w-full max-w-6xl mx-auto px-4", children: _jsxs("div", { className: "flex items-center justify-center gap-4 mb-8", children: [_jsxs("h1", { className: "text-3xl font-bold text-black text-center", children: [_jsx("span", { className: "border-b-4 border-pink-500", children: "Pick a girl" }), " to flirt with"] }), _jsx("img", { src: loveImage, alt: "Love", className: "w-12 h-16" })] }) }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full", children: data.characters.map((character) => (_jsx("div", { className: "bg-[#17475c] rounded-lg shadow-lg overflow-hidden flex flex-col", children: _jsxs("div", { className: "p-4 flex-grow", children: [_jsx("img", { src: character.id === '1' ? frenchImage : character.id === '2' ? spanishImage : russianImage, alt: character.name, className: "w-48 h-48 object-cover mx-auto mb-4" }), _jsx("h2", { className: "text-xl font-bold text-center mb-2 text-white", children: character.name }), _jsx("p", { className: "text-white text-center mb-4", children: character.personality }), _jsxs("div", { className: "space-y-2", children: [_jsx("button", { onClick: () => playVoiceSample(character), className: "w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-150 flex items-center justify-center gap-2", children: playingVoiceId === character.id ? (_jsxs("span", { className: "flex items-center justify-center gap-2", children: [_jsx(FaStop, { className: "text-xl" }), "Stop Voice"] })) : (_jsxs("span", { className: "flex items-center justify-center gap-2", children: [_jsx(FaPlay, { className: "text-xl" }), "Hear Voice"] })) }), _jsxs("button", { onClick: () => handleCharacterSelect(character), className: "w-full bg-black hover:bg-gray-800 text-pink-500 font-bold py-2 px-4 rounded-lg transition-all duration-150 flex items-center justify-center gap-2", children: [_jsx("img", { src: kissImage, alt: "Kiss", className: "w-10 h-10" }), "Pick this girl"] })] })] }) }, character.id))) })] })) : showAnalysis ? (_jsx(SessionAnalysis, { onFlirtAgain: handleBackClick })) : !isFlirting ? (_jsxs("div", { className: "bg-white rounded-lg shadow-lg p-6 text-center max-w-xl mx-auto relative overflow-hidden", style: {
+    return (_jsxs("div", { className: "min-h-screen bg-[#f3e0b7] p-8", children: [_jsxs("div", { className: "max-w-4xl mx-auto flex items-center justify-center min-h-[calc(100vh-4rem)] relative", children: [showProgressOverlay && _jsx(AnalysisProgress, {}), !selectedCharacter ? (_jsxs("div", { className: "w-full", children: [_jsx("div", { className: "w-full max-w-6xl mx-auto px-4", children: _jsxs("div", { className: "flex items-center justify-center gap-4 mb-8", children: [_jsxs("h1", { className: "text-3xl font-bold text-black text-center", children: [_jsx("span", { className: "border-b-4 border-pink-500", children: "Pick a girl" }), " to flirt with"] }), _jsx("img", { src: "/assets/love.png", alt: "Love", className: "w-12 h-16" })] }) }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6 w-full", children: data.characters.map((character) => (_jsx("div", { className: "bg-[#17475c] rounded-lg shadow-lg overflow-hidden flex flex-col", children: _jsxs("div", { className: "p-4 flex-grow", children: [_jsx("img", { src: character.id === '1' ? "/assets/french1.png" : character.id === '2' ? "/assets/spanish 1.png" : "/assets/russian1.png", alt: character.name, className: "w-48 h-48 object-cover mx-auto mb-4" }), _jsx("h2", { className: "text-xl font-bold text-center mb-2 text-white", children: character.name }), _jsx("p", { className: "text-white text-center mb-4", children: character.personality }), _jsxs("div", { className: "space-y-2", children: [_jsx("button", { onClick: () => playVoiceSample(character), className: "w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-150 flex items-center justify-center gap-2", children: playingVoiceId === character.id ? (_jsxs("span", { className: "flex items-center justify-center gap-2", children: [_jsx(FaStop, { className: "text-xl" }), "Stop Voice"] })) : (_jsxs("span", { className: "flex items-center justify-center gap-2", children: [_jsx(FaPlay, { className: "text-xl" }), "Hear Voice"] })) }), _jsxs("button", { onClick: () => handleCharacterSelect(character), className: "w-full bg-black hover:bg-gray-800 text-pink-500 font-bold py-2 px-4 rounded-lg transition-all duration-150 flex items-center justify-center gap-2", children: [_jsx("img", { src: "/assets/kiss.png", alt: "Kiss", className: "w-10 h-10" }), "Pick this girl"] })] })] }) }, character.id))) })] })) : showAnalysis ? (_jsx(SessionAnalysis, { onFlirtAgain: handleBackClick })) : !isFlirting ? (_jsxs("div", { className: "bg-white rounded-lg shadow-lg p-6 text-center max-w-xl mx-auto relative overflow-hidden", style: {
                             backgroundImage: `url(${currentContext?.backgroundImage})`,
                             backgroundSize: '120%',
                             backgroundPosition: 'center',
@@ -1048,7 +1048,7 @@ const Flirt = () => {
                             backgroundBlendMode: 'overlay',
                             backgroundColor: 'rgba(255, 255, 255, 0.25)',
                             minHeight: '600px'
-                        }, children: [_jsxs("button", { onClick: handleBackClick, className: "absolute top-3 left-3 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors duration-200 text-sm", children: [_jsx(FaArrowLeft, {}), " Back"] }), _jsx("div", { className: "backdrop-blur-sm bg-white/30 rounded-lg px-6 py-3 mb-4 inline-block", children: _jsxs("div", { children: [_jsx("h1", { className: "text-lg font-bold uppercase", children: "You Encounter" }), _jsx("h2", { className: "text-3xl text-pink-500 font-semibold mt-1", children: selectedCharacter?.name })] }) }), currentContext && (_jsxs(_Fragment, { children: [_jsx("img", { src: currentContext.image, alt: selectedCharacter?.name, className: "w-40 h-40 object-cover mx-auto mb-4 rounded-lg" }), _jsxs("div", { className: "backdrop-blur-md bg-white/30 rounded-lg p-4 mb-4", children: [_jsxs("div", { className: "mb-2", children: [_jsx("h3", { className: "text-base text-black mb-1 font-bold uppercase", children: "At" }), _jsx("div", { className: "flex items-center justify-center", children: _jsxs("div", { className: "flex items-center", children: [_jsx("img", { src: locationImage, alt: "Location", className: "w-8 h-8 mr-2" }), _jsx("h2", { className: "text-2xl text-blue-700 font-semibold", children: currentContext.title })] }) })] }), _jsx("p", { className: "text-black text-sm", children: currentContext.description })] }), _jsxs("div", { className: "flex gap-3 justify-center", children: [_jsxs("button", { onClick: rerollContext, className: "bg-gray-500 text-white px-4 py-2 rounded-lg text-base font-semibold flex items-center gap-2", children: [_jsx(FaRedo, {}), " Reroll Location"] }), _jsx("button", { onClick: startFlirtingSession, className: "bg-pink-500 text-white px-6 py-2 rounded-lg text-base font-semibold", children: "Let's Go" })] })] }))] })) : (_jsxs("div", { ref: cardRef, className: `bg-white rounded-lg shadow-lg p-8 relative overflow-hidden max-w-xl w-full transition-all duration-500 ${isFadingOut ? 'opacity-0' : 'opacity-100'}`, style: {
+                        }, children: [_jsxs("button", { onClick: handleBackClick, className: "absolute top-3 left-3 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors duration-200 text-sm", children: [_jsx(FaArrowLeft, {}), " Back"] }), _jsx("div", { className: "backdrop-blur-sm bg-white/30 rounded-lg px-6 py-3 mb-4 inline-block", children: _jsxs("div", { children: [_jsx("h1", { className: "text-lg font-bold uppercase", children: "You Encounter" }), _jsx("h2", { className: "text-3xl text-pink-500 font-semibold mt-1", children: selectedCharacter?.name })] }) }), currentContext && (_jsxs(_Fragment, { children: [_jsx("img", { src: currentContext.image, alt: selectedCharacter?.name, className: "w-40 h-40 object-cover mx-auto mb-4 rounded-lg" }), _jsxs("div", { className: "backdrop-blur-md bg-white/30 rounded-lg p-4 mb-4", children: [_jsxs("div", { className: "mb-2", children: [_jsx("h3", { className: "text-base text-black mb-1 font-bold uppercase", children: "At" }), _jsx("div", { className: "flex items-center justify-center", children: _jsxs("div", { className: "flex items-center", children: [_jsx("img", { src: "/assets/location.png", alt: "Location", className: "w-8 h-8 mr-2" }), _jsx("h2", { className: "text-2xl text-blue-700 font-semibold", children: currentContext.title })] }) })] }), _jsx("p", { className: "text-black text-sm", children: currentContext.description })] }), _jsxs("div", { className: "flex gap-3 justify-center", children: [_jsxs("button", { onClick: rerollContext, className: "bg-gray-500 text-white px-4 py-2 rounded-lg text-base font-semibold flex items-center gap-2", children: [_jsx(FaRedo, {}), " Reroll Location"] }), _jsx("button", { onClick: startFlirtingSession, className: "bg-pink-500 text-white px-6 py-2 rounded-lg text-base font-semibold", children: "Let's Go" })] })] }))] })) : (_jsxs("div", { ref: cardRef, className: `bg-white rounded-lg shadow-lg p-8 relative overflow-hidden max-w-xl w-full transition-all duration-500 ${isFadingOut ? 'opacity-0' : 'opacity-100'}`, style: {
                             backgroundImage: `url(${currentContext?.backgroundImage})`,
                             backgroundSize: '120%',
                             backgroundPosition: 'center',
@@ -1056,6 +1056,6 @@ const Flirt = () => {
                             backgroundBlendMode: 'overlay',
                             backgroundColor: 'rgba(255, 255, 255, 0.25)',
                             minHeight: '500px'
-                        }, children: [_jsx("div", { className: "w-full bg-gray-200 rounded-full h-3 mb-6", children: _jsx("div", { className: "bg-pink-500 h-3 rounded-full transition-all duration-1000", style: { width: `${(timer / 60) * 100}%` } }) }), _jsxs("div", { className: "backdrop-blur-md bg-white/30 rounded-lg p-4 mb-4", children: [_jsxs("div", { className: "flex items-center justify-center gap-2 mb-2", children: [_jsx("img", { src: locationImage, alt: "Location", className: "w-6 h-6" }), _jsx("h2", { className: "text-xl text-blue-700 font-semibold", children: currentContext?.title })] }), _jsx("h3", { className: "text-2xl text-pink-500 font-bold text-center", children: selectedCharacter?.name })] }), _jsx("div", { className: "flex justify-center mb-4", children: _jsx("img", { src: currentContext?.image, alt: selectedCharacter?.name, className: "w-48 h-48 object-cover rounded-lg" }) }), _jsx("div", { className: "flex justify-center gap-2 mb-6", children: [...Array(3)].map((_, i) => (_jsx(FaHeart, { className: `text-3xl ${i < zebraHeads ? 'text-pink-500' : 'text-gray-300'}` }, i))) }), _jsxs("div", { className: "flex items-center justify-between w-full px-4", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx(MicrophoneButton, { isUserTurn: isUserTurn, isRecording: isRecording, isProcessing: isProcessing, onStartRecording: handleStartRecording, onStopRecording: handleStopRecording }), _jsx("div", { className: `w-24 h-16 rounded-lg flex flex-col items-center justify-center font-bold text-white ${isUserTurn ? (isRecording ? 'bg-green-500' : 'bg-blue-500') : 'bg-red-500'}`, children: getTurnIndicatorText().map((word, index) => (_jsx("span", { className: "text-sm leading-tight", children: word }, index))) })] }), _jsx("button", { onClick: endFlirtingSession, className: "bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg text-base font-semibold transition-colors", children: "End Session" })] })] }))] }), _jsx("audio", { ref: audioRef, className: "hidden" })] }));
+                        }, children: [_jsx("div", { className: "w-full bg-gray-200 rounded-full h-3 mb-6", children: _jsx("div", { className: "bg-pink-500 h-3 rounded-full transition-all duration-1000", style: { width: `${(timer / 60) * 100}%` } }) }), _jsxs("div", { className: "backdrop-blur-md bg-white/30 rounded-lg p-4 mb-4", children: [_jsxs("div", { className: "flex items-center justify-center gap-2 mb-2", children: [_jsx("img", { src: "/assets/location.png", alt: "Location", className: "w-6 h-6" }), _jsx("h2", { className: "text-xl text-blue-700 font-semibold", children: currentContext?.title })] }), _jsx("h3", { className: "text-2xl text-pink-500 font-bold text-center", children: selectedCharacter?.name })] }), _jsx("div", { className: "flex justify-center mb-4", children: _jsx("img", { src: currentContext?.image, alt: selectedCharacter?.name, className: "w-48 h-48 object-cover rounded-lg" }) }), _jsx("div", { className: "flex justify-center gap-2 mb-6", children: [...Array(3)].map((_, i) => (_jsx(FaHeart, { className: `text-3xl ${i < zebraHeads ? 'text-pink-500' : 'text-gray-300'}` }, i))) }), _jsxs("div", { className: "flex items-center justify-between w-full px-4", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx(MicrophoneButton, { isUserTurn: isUserTurn, isRecording: isRecording, isProcessing: isProcessing, onStartRecording: handleStartRecording, onStopRecording: handleStopRecording }), _jsx("div", { className: `w-24 h-16 rounded-lg flex flex-col items-center justify-center font-bold text-white ${isUserTurn ? (isRecording ? 'bg-green-500' : 'bg-blue-500') : 'bg-red-500'}`, children: getTurnIndicatorText().map((word, index) => (_jsx("span", { className: "text-sm leading-tight", children: word }, index))) })] }), _jsx("button", { onClick: endFlirtingSession, className: "bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg text-base font-semibold transition-colors", children: "End Session" })] })] }))] }), _jsx("audio", { ref: audioRef, className: "hidden" })] }));
 };
 export default Flirt;

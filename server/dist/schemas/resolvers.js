@@ -248,7 +248,12 @@ Text: "${text}"`;
         Your goal is to have a natural conversation while maintaining your character's personality.
         CRITICAL: You MUST ALWAYS respond in ENGLISH ONLY, regardless of your character's background or nationality.
         Even if your character is from a non-English speaking country, you MUST respond in English.
-        For introductions, make them contextually relevant to the current scene but keep them concise.`;
+        For introductions, make them contextually relevant to the current scene but keep them concise.
+        IMPORTANT: Your responses should feel natural and unforced - avoid being overly flirty or cheesy.
+        When responding to the scene context, acknowledge the specific situation and make it feel like a natural continuation of that moment.
+        Your responses should reflect your character's personality while staying grounded in the current situation.
+        CRITICAL: Pay attention to who is doing what in the scene - don't reverse roles or actions. For example, if you're offering help with spicy food, don't thank the other person for helping you.
+        Make sure your response matches the exact situation described in the context, maintaining the correct roles and actions.`;
                 // Generate response using GPT-4
                 const completion = await openai.chat.completions.create({
                     model: "gpt-4",
@@ -290,7 +295,12 @@ Text: "${text}"`;
         Your goal is to have a natural conversation while maintaining your character's personality.
         CRITICAL: You MUST ALWAYS respond in ENGLISH ONLY, regardless of your character's background or nationality.
         Even if your character is from a non-English speaking country, you MUST respond in English.
-        For introductions, make them contextually relevant to the current scene but keep them concise.`;
+        For introductions, make them contextually relevant to the current scene but keep them concise.
+        IMPORTANT: Your responses should feel natural and unforced - avoid being overly flirty or cheesy.
+        When responding to the scene context, acknowledge the specific situation and make it feel like a natural continuation of that moment.
+        Your responses should reflect your character's personality while staying grounded in the current situation.
+        CRITICAL: Pay attention to who is doing what in the scene - don't reverse roles or actions. For example, if you're offering help with spicy food, don't thank the other person for helping you.
+        Make sure your response matches the exact situation described in the context, maintaining the correct roles and actions.`;
                 const completion = await openai.chat.completions.create({
                     model: "gpt-4",
                     messages: [
