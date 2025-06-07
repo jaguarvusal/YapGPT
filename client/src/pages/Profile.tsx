@@ -4,7 +4,7 @@ import { useQuery } from '@apollo/client';
 import { QUERY_SINGLE_YAPPER, QUERY_ME } from '../utils/queries';
 
 import Auth from '../utils/auth';
-import SplashScreen from '../components/SplashScreen';
+import SplashScreen from '../components/SplashScreen.tsx';
 
 const Profile = () => {
   const { yapperId } = useParams();

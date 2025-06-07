@@ -1,6 +1,14 @@
 import { jsxs as _jsxs, jsx as _jsx, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Define unit character images using new URL() approach
+const unitImages = {
+    chef: new URL('/assets/chef.png', import.meta.url).href,
+    boxer: new URL('/assets/boxer.png', import.meta.url).href,
+    driver: new URL('/assets/driver.png', import.meta.url).href,
+    bodyguard: new URL('/assets/bodyguard.png', import.meta.url).href,
+    wizard: new URL('/assets/wizard.png', import.meta.url).href
+};
 const unitNames = [
     'Filler Words',
     'Grammar',
@@ -309,7 +317,7 @@ const Dashboard = () => {
                                             setShowLockedTooltip(null);
                                             setShowSkipTooltip(null);
                                         }
-                                    }, "data-bubble": true, children: _jsxs("div", { className: "relative flex flex-col items-center", children: [level % 5 === 3 && (_jsx("div", { className: `absolute ${unit % 2 === 1 ? '-left-96' : '-right-96'} top-1/2 -translate-y-1/2 w-72 h-72 pointer-events-none`, children: _jsx("img", { src: `/src/assets 2/${unit === 1 ? 'chef' : unit === 2 ? 'boxer' : unit === 3 ? 'driver' : unit === 4 ? 'bodyguard' : 'wizard'}.png`, alt: `Unit ${unit} character`, className: "w-full h-full object-contain" }) })), activeLevel === level && !showLessonTooltip && (_jsx("div", { className: "animate-bounce-slow mb-1 z-[30] absolute -top-12", children: _jsxs("div", { className: "relative", children: [_jsx("div", { className: "bg-black px-4 py-2 rounded-lg text-sm border-2 border-gray-500", children: _jsx("span", { className: `font-bold tracking-wider ${unit === 1 ? 'text-orange-500'
+                                    }, "data-bubble": true, children: _jsxs("div", { className: "relative flex flex-col items-center", children: [level % 5 === 3 && (_jsx("div", { className: `absolute ${unit % 2 === 1 ? '-left-96' : '-right-96'} top-1/2 -translate-y-1/2 w-72 h-72 pointer-events-none`, children: _jsx("img", { src: `/assets/${unit === 1 ? 'chef' : unit === 2 ? 'boxer' : unit === 3 ? 'driver' : unit === 4 ? 'bodyguard' : 'wizard'}.png`, alt: `Unit ${unit} character`, className: "w-full h-full object-contain", style: { zIndex: 20 } }) })), activeLevel === level && !showLessonTooltip && (_jsx("div", { className: "animate-bounce-slow mb-1 z-[30] absolute -top-12", children: _jsxs("div", { className: "relative", children: [_jsx("div", { className: "bg-black px-4 py-2 rounded-lg text-sm border-2 border-gray-500", children: _jsx("span", { className: `font-bold tracking-wider ${unit === 1 ? 'text-orange-500'
                                                                     : unit === 2 ? 'text-blue-400'
                                                                         : unit === 3 ? 'text-purple-400'
                                                                             : unit === 4 ? 'text-indigo-400'

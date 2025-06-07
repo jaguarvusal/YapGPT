@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
-import Hearts from './Hearts';
+import Hearts from './Hearts.tsx';
 import { useStreak } from '../contexts/StreakContext';
-import StreakIcon from './StreakIcon';
-import passwordIcon from '../assets 2/password.png';
+import StreakIcon from './StreakIcon.tsx';
+import passwordIcon from '/assets/password.png';
 const RightSidebar = () => {
     const { streak } = useStreak();
     const [showSignup, setShowSignup] = useState(false);

@@ -2,23 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useSubscription } from '@apollo/client';
 import { gql } from '@apollo/client';
 import { FaPlay, FaStop, FaHeart, FaRedo, FaArrowLeft, FaMicrophone, FaMicrophoneSlash } from 'react-icons/fa';
-import frenchImage from '../assets 2/french1.png';
-import spanishImage from '../assets 2/spanish 1.png';
-import russianImage from '../assets 2/russian1.png';
-import kissImage from '../assets 2/kiss.png';
-import loveImage from '../assets 2/love.png';
-import locationImage from '../assets 2/location.png';
-import artGalleryImage from '../assets 2/artgallery.png';
-import cafeImage from '../assets 2/cafe.png';
-import louvreImage from '../assets 2/louvre.png';
-import tavernImage from '../assets 2/tavern.png';
-import tacoImage from '../assets 2/taco.png';
-import festivalImage from '../assets 2/festival.png';
-import marketImage from '../assets 2/market.png';
-import operaImage from '../assets 2/opera.png';
-import trainImage from '../assets 2/train.png';
-import SplashScreen from '../components/SplashScreen';
-import SessionAnalysis from '../components/SessionAnalysis';
+import SplashScreen from '../components/SplashScreen.tsx';
+import SessionAnalysis from '../components/SessionAnalysis.tsx';
 import { CSSProperties } from 'react';
 
 // Add custom animation for reverse spin
@@ -156,6 +141,14 @@ const STREAM_VOICE_RESPONSE = gql`
   }
 `;
 
+const ANALYZE_CONVERSATION = gql`
+  mutation AnalyzeConversation($conversation: [MessageInput!]!) {
+    analyzeConversation(conversation: $conversation) {
+      analysis
+    }
+  }
+`;
+
 interface Character {
   id: string;
   name: string;
@@ -182,60 +175,60 @@ const locationContexts: Record<string, LocationContext[]> = {
     {
       title: "Art Gallery Opening",
       description: "As you admire a contemporary piece, you notice Elodie standing beside you, her elegant silhouette perfectly framed against the artwork. She catches your eye and offers a sophisticated smile, commenting on the artist's use of color. The soft lighting and classical music create an intimate atmosphere as you begin to discuss the exhibition.",
-      image: frenchImage,
-      backgroundImage: artGalleryImage
+      image: "/assets/french1.png",
+      backgroundImage: "/assets/artgallery.png"
     },
     {
       title: "Café de Flore",
       description: "You're seated at a corner table when Elodie enters, her presence commanding attention. As she passes your table, she accidentally drops her book of French poetry. You quickly pick it up, and she thanks you with a charming smile, asking if you'd like to join her for a coffee and discuss the works of Baudelaire.",
-      image: frenchImage,
-      backgroundImage: cafeImage
+      image: "/assets/french1.png",
+      backgroundImage: "/assets/cafe.png"
     },
     {
       title: "Louvre Museum",
       description: "While admiring the Mona Lisa, you notice Elodie standing next to you, lost in thought. As the crowd shifts, you both find yourselves at the perfect angle to view the painting. She turns to you with an intellectual spark in her eyes and asks for your interpretation of the famous smile, beginning a fascinating conversation about art and philosophy.",
-      image: frenchImage,
-      backgroundImage: louvreImage
+      image: "/assets/french1.png",
+      backgroundImage: "/assets/louvre.png"
     }
   ],
   '2': [ // Camila (Spanish)
     {
       title: "Flamenco Night",
       description: "The rhythm of the guitar fills the air as Camila takes the dance floor. Her passionate movements catch your eye, and during a particularly energetic spin, she accidentally bumps into you. Instead of apologizing, she grabs your hand with a fiery smile, pulling you into the dance, her energy infectious as she teaches you the basic steps.",
-      image: spanishImage,
-      backgroundImage: tavernImage
+      image: "/assets/spanish 1.png",
+      backgroundImage: "/assets/tavern.png"
     },
     {
       title: "Beachside Taco Truck",
       description: "As you're enjoying the sunset, Camila approaches the taco truck next to you. She notices you're struggling with the spicy salsa and offers you her secret remedy - a special lime and salt combination. Her laughter is as warm as the evening breeze as she shares stories about her grandmother's recipes and love for Latin music.",
-      image: spanishImage,
-      backgroundImage: tacoImage
+      image: "/assets/spanish 1.png",
+      backgroundImage: "/assets/taco.png"
     },
     {
       title: "Music Festival",
-      description: "The vibrant beats of Latin music fill the air when Camila, dancing with infectious energy, accidentally spills her drink on your shirt. Instead of a simple apology, she insists on buying you a new drink and teaching you the proper way to dance to the rhythm. Her passion for music and dance is evident as she guides you through the steps.",
-      image: spanishImage,
-      backgroundImage: festivalImage
+      description: "The vibrant energy of the festival surrounds you as Camila dances nearby, her movements perfectly synchronized with the Latin rhythms. During a particularly catchy song, she catches your eye and waves you over, her smile as bright as the stage lights. She offers you a pair of maracas, inviting you to join in the celebration of music and culture.",
+      image: "/assets/spanish 1.png",
+      backgroundImage: "/assets/festival.png"
     }
   ],
   '3': [ // Anya (Russian)
     {
       title: "Winter Market",
       description: "Amidst the falling snow, you notice Anya examining a handcrafted matryoshka doll. As you approach the same vendor, she turns to you with a mysterious smile, asking if you believe in the traditional Russian superstition about the dolls bringing good luck in love. Her eyes sparkle with adventure as she shares the story behind the intricate craftsmanship.",
-      image: russianImage,
-      backgroundImage: marketImage
+      image: "/assets/russian1.png",
+      backgroundImage: "/assets/market.png"
     },
     {
       title: "Ballet Performance",
       description: "During the intermission at the Bolshoi Theatre, you find yourself next to Anya at the refreshments counter. She notices your program and strikes up a conversation about the performance, her knowledge of ballet history and technique revealing a deep appreciation for the arts. Her mysterious aura is enhanced by the grandeur of the theatre.",
-      image: russianImage,
-      backgroundImage: operaImage
+      image: "/assets/russian1.png",
+      backgroundImage: "/assets/opera.png"
     },
     {
       title: "Trans-Siberian Train",
       description: "As the train winds through the vast Russian landscape, you find yourself sharing a compartment with Anya. She's reading a book of Russian poetry when the train hits a bump, causing her to drop her bookmark. You pick it up, and she thanks you with a bold smile, asking if you'd like to hear the poem she was reading, her adventurous spirit evident in her storytelling.",
-      image: russianImage,
-      backgroundImage: trainImage
+      image: "/assets/russian1.png",
+      backgroundImage: "/assets/train.png"
     }
   ]
 };
@@ -385,7 +378,7 @@ const Flirt: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [preGeneratedResponse, setPreGeneratedResponse] = useState<string>('');
   const [preGeneratedVoiceUrl, setPreGeneratedVoiceUrl] = useState<string>('');
-  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
   const cardRef = useRef<HTMLDivElement>(null);
   const [errorCount, setErrorCount] = useState(0);
   const [lastErrorTime, setLastErrorTime] = useState(0);
@@ -396,11 +389,14 @@ const Flirt: React.FC = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isFadingIn, setIsFadingIn] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisFeedback, setAnalysisFeedback] = useState<string>('');
 
   const { loading, error, data } = useQuery(GET_CHARACTERS);
   const [generateVoice] = useMutation(GENERATE_VOICE);
   const [generateChatResponse] = useMutation(GENERATE_CHAT_RESPONSE);
   const [convertSpeechToText] = useMutation(CONVERT_SPEECH_TO_TEXT);
+  const [analyzeConversation] = useMutation(ANALYZE_CONVERSATION);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -456,7 +452,12 @@ const Flirt: React.FC = () => {
     setCurrentContext(context);
 
     // Pre-generate the initial response and voice
-    const prompt = `You are ${character.name}, ${character.personality}. You are at ${context.title}. The following is the scene: \"${context.description}\". Greet the person in front of you and say something engaging, in 2 sentences or less. Stay in character.`;
+    const prompt = `You are ${character.name}, ${character.personality}. You are at ${context.title}. The following is the scene: "${context.description}". 
+Based on this specific situation, respond naturally as if you're continuing the moment described. 
+Pay close attention to who is doing what in the scene - maintain the correct roles and actions.
+For example, if you're offering help with spicy food, don't thank the other person for helping you.
+Keep your response authentic to your character while staying grounded in the current situation.
+Respond in 1-2 sentences maximum.`;
 
     try {
       const { data: chatData } = await generateChatResponse({
@@ -501,7 +502,12 @@ const Flirt: React.FC = () => {
       setCurrentContext(newContext);
 
       // Re-generate response for new context
-      const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${newContext.title}. The following is the scene: \"${newContext.description}\". Greet the person in front of you and say something engaging, in 2 sentences or less. Stay in character.`;
+      const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${newContext.title}. The following is the scene: "${newContext.description}". 
+Based on this specific situation, respond naturally as if you're continuing the moment described. 
+Pay close attention to who is doing what in the scene - maintain the correct roles and actions.
+For example, if you're offering help with spicy food, don't thank the other person for helping you.
+Keep your response authentic to your character while staying grounded in the current situation.
+Respond in 1-2 sentences maximum.`;
 
       try {
         const { data: chatData } = await generateChatResponse({
@@ -541,11 +547,20 @@ const Flirt: React.FC = () => {
   };
 
   const startFlirtingSession = async () => {
+    // Initialize conversation history
+    setConversationHistory([]);
+    console.log('Initialized empty conversation history');
+
     // If we don't have pre-generated content, generate it first
     if (!preGeneratedVoiceUrl || !preGeneratedResponse) {
       setShowSplash(true);
       if (selectedCharacter && currentContext) {
-        const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${currentContext.title}. The following is the scene: \"${currentContext.description}\". Greet the person in front of you and say something engaging, in 2 sentences or less. Stay in character.`;
+        const prompt = `You are ${selectedCharacter.name}, ${selectedCharacter.personality}. You are at ${currentContext.title}. The following is the scene: "${currentContext.description}". 
+Based on this specific situation, respond naturally as if you're continuing the moment described. 
+Pay close attention to who is doing what in the scene - maintain the correct roles and actions.
+For example, if you're offering help with spicy food, don't thank the other person for helping you.
+Keep your response authentic to your character while staying grounded in the current situation.
+Respond in 1-2 sentences maximum.`;
 
         try {
           const { data: chatData } = await generateChatResponse({
@@ -557,6 +572,9 @@ const Flirt: React.FC = () => {
 
           const response = chatData.generateChatResponse.response;
           setPreGeneratedResponse(response);
+          
+          // Log the initial character message
+          console.log('Logging initial character message:', response);
           logConversationMessage('character', response);
 
           const { data: voiceData } = await generateVoice({
@@ -580,6 +598,10 @@ const Flirt: React.FC = () => {
         }
       }
       setShowSplash(false);
+    } else {
+      // If we have pre-generated content, still log it
+      console.log('Logging pre-generated character message:', preGeneratedResponse);
+      logConversationMessage('character', preGeneratedResponse);
     }
 
     setIsFlirting(true);
@@ -588,7 +610,7 @@ const Flirt: React.FC = () => {
     setShowAnalysis(false);
     setIsUserTurn(false); // Set to false when girl starts speaking
     setIsStreaming(true);
-    setIsProcessing(false); // Ensure processing is false when starting
+    setIsProcessing(false);
 
     // Play the pre-generated voice immediately
     if (audioRef.current && preGeneratedVoiceUrl) {
@@ -599,7 +621,7 @@ const Flirt: React.FC = () => {
       audioRef.current.onended = () => {
         setIsUserTurn(true);
         setIsStreaming(false);
-        setIsProcessing(false); // Ensure processing is false when turn switches
+        setIsProcessing(false);
       };
     }
 
@@ -624,27 +646,82 @@ const Flirt: React.FC = () => {
       streamRef.current = null;
     }
 
-    // Show progress overlay
-    setShowProgressOverlay(true);
+    // Start fade out animation
+    setIsFadingOut(true);
     setIsFlirting(false);
 
-    // Simulate analysis progress
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-      progress += 1;
-      setAnalysisProgress(progress);
-      
-      if (progress >= 100) {
-        clearInterval(progressInterval);
+    // Wait for fade out animation to complete
+    setTimeout(async () => {
+      setShowAnalysis(true);
+      setIsAnalyzing(true);
+      setIsFadingOut(false);
+      setIsFadingIn(true);
+
+      try {
+        // Validate conversation history
+        if (!conversationHistory || conversationHistory.length === 0) {
+          console.error('No conversation history available for analysis');
+          setAnalysisFeedback('Unable to analyze conversation: No conversation history available.');
+          return;
+        }
+
+        console.log('Conversation history before analysis:', JSON.stringify(conversationHistory, null, 2));
         
-        // Hide progress and show analysis with a slight delay
-        setTimeout(() => {
-          setShowProgressOverlay(false);
-          setShowAnalysis(true);
-          setIsFadingIn(true);
-        }, 500); // Add a small delay for smoother transition
+        // Ensure each message has the correct format
+        const validConversation = conversationHistory.every(msg => 
+          msg && typeof msg === 'object' && 
+          typeof msg.role === 'string' && 
+          typeof msg.content === 'string'
+        );
+
+        if (!validConversation) {
+          console.error('Invalid conversation history format:', conversationHistory);
+          setAnalysisFeedback('Unable to analyze conversation: Invalid conversation format.');
+          return;
+        }
+
+        // Ensure all roles are either 'user' or 'assistant'
+        const validRoles = conversationHistory.every(msg => 
+          msg.role === 'user' || msg.role === 'assistant'
+        );
+
+        if (!validRoles) {
+          console.error('Invalid roles in conversation history:', conversationHistory);
+          setAnalysisFeedback('Unable to analyze conversation: Invalid role format.');
+          return;
+        }
+
+        console.log('Sending conversation for analysis with format:', {
+          conversation: conversationHistory.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        });
+
+        const { data } = await analyzeConversation({
+          variables: {
+            conversation: conversationHistory.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
+          }
+        });
+
+        console.log('Received analysis:', data);
+        setAnalysisFeedback(data.analyzeConversation.analysis);
+      } catch (error) {
+        console.error('Error analyzing conversation:', error);
+        if (error instanceof Error) {
+          console.error('Error details:', error.message);
+        }
+        setAnalysisFeedback('Unable to analyze conversation at this time.');
       }
-    }, 50);
+
+      // Show the analysis after getting feedback
+      setTimeout(() => {
+        setIsAnalyzing(false);
+      }, 1000);
+    }, 500);
   };
 
   const getRandomContext = (characterId: string, excludeTitle?: string) => {
@@ -1021,6 +1098,8 @@ const Flirt: React.FC = () => {
     setShowAnalysis(false);
     setPreGeneratedResponse('');
     setPreGeneratedVoiceUrl('');
+    setConversationHistory([]);
+    console.log('Reset conversation history');
   };
 
   const handleStartRecording = () => {
@@ -1095,6 +1174,9 @@ const Flirt: React.FC = () => {
         throw new Error('Whisper returned empty transcription');
       }
 
+      // Log user's message
+      logConversationMessage('user', transcribedText);
+
       // Generate chat response using GPT
       console.log('Sending transcription to GPT for response...');
       const { data: chatData } = await generateChatResponse({
@@ -1110,6 +1192,9 @@ const Flirt: React.FC = () => {
       if (!gptResponse) {
         throw new Error('GPT returned empty response');
       }
+
+      // Log character's response
+      logConversationMessage('character', gptResponse);
 
       // Set streaming state and current response
       setIsStreaming(true);
@@ -1169,9 +1254,8 @@ const Flirt: React.FC = () => {
   // Add this function to log messages
   const logConversationMessage = (speaker: 'user' | 'character', text: string) => {
     setConversationHistory(prev => [...prev, {
-      speaker,
-      text,
-      timestamp: Date.now()
+      role: speaker === 'user' ? 'user' : 'assistant',
+      content: text
     }]);
     console.log(`[${speaker.toUpperCase()}] ${text}`);
   };
@@ -1203,15 +1287,18 @@ const Flirt: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f3e0b7] p-8">
       <div className="max-w-4xl mx-auto flex items-center justify-center min-h-[calc(100vh-4rem)] relative">
-        {showProgressOverlay && <AnalysisProgress />}
-        {!selectedCharacter ? (
+        {loading || showSplash ? (
+          <SplashScreen onClick={() => setShowSplash(false)} />
+        ) : error ? (
+          <div>Error: {error.message}</div>
+        ) : !selectedCharacter ? (
           <div className="w-full">
             <div className="w-full max-w-6xl mx-auto px-4">
               <div className="flex items-center justify-center gap-4 mb-8">
                 <h1 className="text-3xl font-bold text-black text-center">
                   <span className="border-b-4 border-pink-500">Pick a girl</span> to flirt with
                 </h1>
-                <img src={loveImage} alt="Love" className="w-12 h-16" />
+                <img src="/assets/love.png" alt="Love" className="w-12 h-16" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
@@ -1222,7 +1309,7 @@ const Flirt: React.FC = () => {
                 >
                   <div className="p-4 flex-grow">
                     <img
-                      src={character.id === '1' ? frenchImage : character.id === '2' ? spanishImage : russianImage} 
+                      src={character.id === '1' ? "/assets/french1.png" : character.id === '2' ? "/assets/spanish 1.png" : "/assets/russian1.png"} 
                       alt={character.name}
                       className="w-48 h-48 object-cover mx-auto mb-4"
                     />
@@ -1249,7 +1336,7 @@ const Flirt: React.FC = () => {
                         onClick={() => handleCharacterSelect(character)}
                         className="w-full bg-black hover:bg-gray-800 text-pink-500 font-bold py-2 px-4 rounded-lg transition-all duration-150 flex items-center justify-center gap-2"
                       >
-                        <img src={kissImage} alt="Kiss" className="w-10 h-10" />
+                        <img src="/assets/kiss.png" alt="Kiss" className="w-10 h-10" />
                         Pick this girl
                       </button>
                     </div>
@@ -1259,69 +1346,14 @@ const Flirt: React.FC = () => {
             </div>
           </div>
         ) : showAnalysis ? (
-          <SessionAnalysis onFlirtAgain={handleBackClick} />
-        ) : !isFlirting ? (
-          <div 
-            className="bg-white rounded-lg shadow-lg p-6 text-center max-w-xl mx-auto relative overflow-hidden"
-            style={{
-              backgroundImage: `url(${currentContext?.backgroundImage})`,
-              backgroundSize: '120%',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              backgroundBlendMode: 'overlay',
-              backgroundColor: 'rgba(255, 255, 255, 0.25)',
-              minHeight: '600px'
-            }}
-          >
-            <button
-              onClick={handleBackClick}
-              className="absolute top-3 left-3 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors duration-200 text-sm"
-            >
-              <FaArrowLeft /> Back
-            </button>
-            <div className="backdrop-blur-sm bg-white/30 rounded-lg px-6 py-3 mb-4 inline-block">
-              <div>
-                <h1 className="text-lg font-bold uppercase">You Encounter</h1>
-                <h2 className="text-3xl text-pink-500 font-semibold mt-1">{selectedCharacter?.name}</h2>
-              </div>
-            </div>
-            {currentContext && (
-              <>
-                <img
-                  src={currentContext.image}
-                  alt={selectedCharacter?.name}
-                  className="w-40 h-40 object-cover mx-auto mb-4 rounded-lg"
-                />
-                <div className="backdrop-blur-md bg-white/30 rounded-lg p-4 mb-4">
-                  <div className="mb-2">
-                    <h3 className="text-base text-black mb-1 font-bold uppercase">At</h3>
-                    <div className="flex items-center justify-center">
-                      <div className="flex items-center">
-                        <img src={locationImage} alt="Location" className="w-8 h-8 mr-2" />
-                        <h2 className="text-2xl text-blue-700 font-semibold">{currentContext.title}</h2>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-black text-sm">{currentContext.description}</p>
-                </div>
-                <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={rerollContext}
-                    className="bg-gray-500 text-white px-4 py-2 rounded-lg text-base font-semibold flex items-center gap-2"
-                  >
-                    <FaRedo /> Reroll Location
-                  </button>
-                  <button
-                    onClick={startFlirtingSession}
-                    className="bg-pink-500 text-white px-6 py-2 rounded-lg text-base font-semibold"
-                  >
-                    Let's Go
-                  </button>
-                </div>
-              </>
-            )}
+          <div className={`transition-opacity duration-300 ${isFadingIn ? 'opacity-100' : 'opacity-0'}`}>
+            <SessionAnalysis 
+              onFlirtAgain={handleBackClick} 
+              isLoading={isAnalyzing}
+              analysisFeedback={analysisFeedback}
+            />
           </div>
-        ) : (
+        ) : isFlirting || isFadingOut ? (
           <div 
             ref={cardRef}
             className={`bg-white rounded-lg shadow-lg p-8 relative overflow-hidden max-w-xl w-full transition-all duration-500 ${
@@ -1348,7 +1380,7 @@ const Flirt: React.FC = () => {
             {/* Location and Name */}
             <div className="backdrop-blur-md bg-white/30 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <img src={locationImage} alt="Location" className="w-6 h-6" />
+                <img src="/assets/location.png" alt="Location" className="w-6 h-6" />
                 <h2 className="text-xl text-blue-700 font-semibold">{currentContext?.title}</h2>
               </div>
               <h3 className="text-2xl text-pink-500 font-bold text-center">{selectedCharacter?.name}</h3>
@@ -1402,6 +1434,67 @@ const Flirt: React.FC = () => {
                 End Session
               </button>
             </div>
+          </div>
+        ) : (
+          <div 
+            className="bg-white rounded-lg shadow-lg p-6 text-center max-w-xl mx-auto relative overflow-hidden"
+            style={{
+              backgroundImage: `url(${currentContext?.backgroundImage})`,
+              backgroundSize: '120%',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundBlendMode: 'overlay',
+              backgroundColor: 'rgba(255, 255, 255, 0.25)',
+              minHeight: '600px'
+            }}
+          >
+            <button
+              onClick={handleBackClick}
+              className="absolute top-3 left-3 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors duration-200 text-sm"
+            >
+              <FaArrowLeft /> Back
+            </button>
+            <div className="backdrop-blur-sm bg-white/30 rounded-lg px-6 py-3 mb-4 inline-block">
+              <div>
+                <h1 className="text-lg font-bold uppercase">You Encounter</h1>
+                <h2 className="text-3xl text-pink-500 font-semibold mt-1">{selectedCharacter?.name}</h2>
+              </div>
+            </div>
+            {currentContext && (
+              <>
+                <img
+                  src={currentContext.image}
+                  alt={selectedCharacter?.name}
+                  className="w-40 h-40 object-cover mx-auto mb-4 rounded-lg"
+                />
+                <div className="backdrop-blur-md bg-white/30 rounded-lg p-4 mb-4">
+                  <div className="mb-2">
+                    <h3 className="text-base text-black mb-1 font-bold uppercase">At</h3>
+                    <div className="flex items-center justify-center">
+                      <div className="flex items-center">
+                        <img src="/assets/location.png" alt="Location" className="w-8 h-8 mr-2" />
+                        <h2 className="text-2xl text-blue-700 font-semibold">{currentContext.title}</h2>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-black text-sm">{currentContext.description}</p>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={rerollContext}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg text-base font-semibold flex items-center gap-2"
+                  >
+                    <FaRedo /> Reroll Location
+                  </button>
+                  <button
+                    onClick={startFlirtingSession}
+                    className="bg-pink-500 text-white px-6 py-2 rounded-lg text-base font-semibold"
+                  >
+                    Let's Go
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

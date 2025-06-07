@@ -1,5 +1,4 @@
 import React from 'react';
-import competeImage from '../assets 2/compete.png';
 
 const LeaderboardsSidebar: React.FC = () => {
   return (
@@ -11,7 +10,7 @@ const LeaderboardsSidebar: React.FC = () => {
           <p className="text-base text-white mb-8">More levels you complete, the higher you rank compared to other yappers</p>
         </div>
         <div className="w-1/2 flex justify-end items-end mt-4">
-          <img src={competeImage} alt="Compete" className="w-48 h-auto translate-y-5" />
+          <img src="/assets/compete.png" alt="Compete" className="w-48 h-auto translate-y-5" />
         </div>
       </div>
     </div>

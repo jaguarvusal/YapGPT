@@ -1,5 +1,5 @@
 import React from 'react';
-import Hearts from './Hearts';
+import Hearts from './Hearts.tsx';
 
 const LessonHearts: React.FC = () => {
   return (

@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import { QUERY_YAPPERS } from '../utils/queries';
+
+// Define unit character images using new URL() approach
+const unitImages = {
+  chef: new URL('/assets/chef.png', import.meta.url).href,
+  boxer: new URL('/assets/boxer.png', import.meta.url).href,
+  driver: new URL('/assets/driver.png', import.meta.url).href,
+  bodyguard: new URL('/assets/bodyguard.png', import.meta.url).href,
+  wizard: new URL('/assets/wizard.png', import.meta.url).href
+};
 
 const unitNames = [
   'Filler Words',
@@ -381,9 +392,10 @@ const Dashboard: React.FC = () => {
                         {level % 5 === 3 && (
                           <div className={`absolute ${unit % 2 === 1 ? '-left-96' : '-right-96'} top-1/2 -translate-y-1/2 w-72 h-72 pointer-events-none`}>
                             <img 
-                              src={`/src/assets 2/${unit === 1 ? 'chef' : unit === 2 ? 'boxer' : unit === 3 ? 'driver' : unit === 4 ? 'bodyguard' : 'wizard'}.png`} 
+                              src={`/assets/${unit === 1 ? 'chef' : unit === 2 ? 'boxer' : unit === 3 ? 'driver' : unit === 4 ? 'bodyguard' : 'wizard'}.png`}
                               alt={`Unit ${unit} character`}
                               className="w-full h-full object-contain"
+                              style={{ zIndex: 20 }}
                             />
                           </div>
                         )}

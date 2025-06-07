@@ -27,7 +27,9 @@ const startApolloServer = async () => {
 
   // Enable CORS
   app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: process.env.NODE_ENV === 'production' 
+      ? [process.env.CLIENT_URL || 'https://yapgpt-kmgv.onrender.com', 'http://localhost:3000']
+      : 'http://localhost:3000',
     credentials: true
   }));
 

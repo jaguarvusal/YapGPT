@@ -11,18 +11,20 @@ import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { HeartsProvider } from './contexts/HeartsContext';
 import { StreakProvider } from './contexts/StreakContext';
+import { ChakraProvider } from '@chakra-ui/react';
+import { theme } from './theme';
 
-import App from './App.jsx';
+import App from './App.tsx';
 import Dashboard from './components/Dashboard';
-import Profile from './pages/Profile';
-import Signup from './pages/Signup';
-import Login from './pages/Login';
-import Error from './pages/Error';
-import Lesson from './components/Lesson';
-import LessonLayout from './components/LessonLayout';
-import Leaderboards from './components/Leaderboards';
-import Auth from './pages/Auth';
-import Flirt from './pages/Flirt';
+import Profile from './pages/Profile.tsx';
+import Signup from './pages/Signup.tsx';
+import Login from './pages/Login.tsx';
+import Error from './pages/Error.tsx';
+import Lesson from './components/Lesson.tsx';
+import LessonLayout from './components/LessonLayout.tsx';
+import Leaderboards from './components/Leaderboards.tsx';
+import Auth from './pages/Auth.tsx';
+import Flirt from './pages/Flirt.tsx';
 
 const httpLink = new HttpLink({
   uri: 'http://localhost:3001/graphql',

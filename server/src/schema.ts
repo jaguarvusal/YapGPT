@@ -1,0 +1,97 @@
+import { gql } from 'apollo-server-express';
+import { OpenAI } from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+const typeDefs = gql`
+  type Character {
+    id: ID!
+    name: String!
+    description: String!
+    imageUrl: String!
+    voiceId: String!
+  }
+
+  type Query {
+    characters: [Character!]!
+  }
+
+  input MessageInput {
+    role: String!
+    content: String!
+  }
+
+  type AnalysisResponse {
+    analysis: String!
+  }
+
+  type Mutation {
+    generateChatResponse(characterId: ID!, message: String!): String!
+    generateVoice(text: String!, voiceId: String!): String!
+    convertSpeechToText(audioBase64: String!): String!
+    analyzeConversation(conversation: [MessageInput!]!): AnalysisResponse!
+  }
+`;
+
+const resolvers = {
+  Query: {
+    characters: async () => {
+      // ... existing characters resolver ...
+    }
+  },
+  Mutation: {
+    generateChatResponse: async (_: any, { characterId, message }: { characterId: string; message: string }) => {
+      // ... existing generateChatResponse resolver ...
+    },
+    generateVoice: async (_: any, { text, voiceId }: { text: string; voiceId: string }) => {
+      // ... existing generateVoice resolver ...
+    },
+    convertSpeechToText: async (_: any, { audioBase64 }: { audioBase64: string }) => {
+      // ... existing convertSpeechToText resolver ...
+    },
+    analyzeConversation: async (_: any, { conversation }: { conversation: Array<{ role: string; content: string }> }) => {
+      try {
+        const prompt = `Please analyze this flirting conversation and provide constructive feedback. Focus on:
+1. Conversation flow and engagement
+2. Response quality and appropriateness
+3. Areas for improvement
+4. Positive aspects to maintain
+
+Conversation:
+${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+Please provide a concise, encouraging analysis that helps the user improve their flirting skills.`;
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        });
+
+        return {
+          analysis: response.choices[0].message.content || "Unable to analyze conversation."
+        };
+      } catch (error) {
+        console.error('Error analyzing conversation:', error);
+        throw new Error('Failed to analyze conversation');
+      }
+    }
+  }
+};
+
+export { typeDefs, resolvers }; 

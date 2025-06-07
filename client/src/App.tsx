@@ -9,13 +9,14 @@ import {
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
-import Sidebar from './components/Sidebar';
-import RightSidebar from './components/RightSidebar';
-import LeaderboardsSidebar from './components/LeaderboardsSidebar';
-import StreakPopup from './components/StreakPopup';
+import Sidebar from './components/Sidebar.tsx';
+import RightSidebar from './components/RightSidebar.tsx';
+import LeaderboardsSidebar from './components/LeaderboardsSidebar.tsx';
+import StreakPopup from './components/StreakPopup.tsx';
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:3001/graphql',
+  uri: import.meta.env.VITE_SERVER_URL || 'http://localhost:3001/graphql',
+  credentials: 'include'
 });
 
 // Construct request middleware that will attach the JWT token to every request as an `authorization` header

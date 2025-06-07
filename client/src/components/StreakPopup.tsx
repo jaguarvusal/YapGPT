@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStreak } from '../contexts/StreakContext';
-import StreakIcon from './StreakIcon';
+import StreakIcon from './StreakIcon.tsx';
 
 const streakMessages = [
   "🔥 Amazing streak! Keep the momentum going!",

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
 import Auth from '../utils/auth';
-import passwordIcon from '../assets 2/password.png';
+import passwordIcon from '/assets/password.png';
 import { FaHome, FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
 
 const Sidebar: React.FC = () => {
@@ -136,7 +136,7 @@ const Sidebar: React.FC = () => {
       {/* Logo */}
       <div className="mt-1">
         <div className="flex items-center justify-center">
-          <img src="/src/assets 2/logo.png" alt="YapGPT Logo" className="w-40 h-40" />
+          <img src="/assets/logo.png" alt="YapGPT Logo" className="w-40 h-40" />
         </div>
       </div>
 
@@ -157,7 +157,7 @@ const Sidebar: React.FC = () => {
                 selectedButton !== 'yap' ? 'group-hover:bg-[#f3e0b7]' : ''
               }`}>
                 <span className="w-16 h-16">
-                  <img src="/src/assets 2/yap.png" alt="Yap" className="w-full h-full object-contain" />
+                  <img src="/assets/yap.png" alt="Yap" className="w-full h-full object-contain" />
                 </span>
                 <span className={`text-sm font-medium ${
                   selectedButton === 'yap' 
@@ -182,7 +182,7 @@ const Sidebar: React.FC = () => {
                 selectedButton !== 'leaderboard' ? 'group-hover:bg-[#f3e0b7]' : ''
               }`}>
                 <span className="w-16 h-16">
-                  <img src="/src/assets 2/leaderboards.png" alt="Leaderboard" className="w-full h-full object-contain" />
+                  <img src="/assets/leaderboards.png" alt="Leaderboard" className="w-full h-full object-contain" />
                 </span>
                 <span className={`text-sm font-medium ${
                   selectedButton === 'leaderboard' 
@@ -207,7 +207,7 @@ const Sidebar: React.FC = () => {
                 selectedButton !== 'flirt' ? 'group-hover:bg-[#f3e0b7]' : ''
               }`}>
                 <span className="w-16 h-16">
-                  <img src="/src/assets 2/flirt.png" alt="Flirt" className="w-full h-full object-contain" />
+                  <img src="/assets/flirt.png" alt="Flirt" className="w-full h-full object-contain" />
                 </span>
                 <span className={`text-sm font-medium ${
                   selectedButton === 'flirt' 
@@ -233,7 +233,7 @@ const Sidebar: React.FC = () => {
               }`}>
                 <span className="w-16 h-16 relative">
                   <div className="absolute -top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-                  <img src="/src/assets 2/profile.png" alt="Profile" className="w-full h-full object-contain" />
+                  <img src="/assets/profile.png" alt="Profile" className="w-full h-full object-contain" />
                 </span>
                 <span className={`text-sm font-medium ${
                   selectedButton === 'profile' 

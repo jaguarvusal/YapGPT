@@ -2,10 +2,10 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { Outlet, useLocation } from 'react-router-dom';
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink, } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import Sidebar from './components/Sidebar';
-import RightSidebar from './components/RightSidebar';
-import LeaderboardsSidebar from './components/LeaderboardsSidebar';
-import StreakPopup from './components/StreakPopup';
+import Sidebar from './components/Sidebar.tsx';
+import RightSidebar from './components/RightSidebar.tsx';
+import LeaderboardsSidebar from './components/LeaderboardsSidebar.tsx';
+import StreakPopup from './components/StreakPopup.tsx';
 const httpLink = createHttpLink({
     uri: 'http://localhost:3001/graphql',
 });
