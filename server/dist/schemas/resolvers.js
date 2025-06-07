@@ -417,22 +417,60 @@ Text: "${text}"`;
         analyzeConversation: async (_, { conversation }) => {
             try {
                 console.log('Received conversation for analysis:', conversation);
-                const prompt = `Please analyze this flirting conversation and provide constructive feedback. Focus on:
-1. Conversation flow and engagement
-2. Response quality and appropriateness
-3. Areas for improvement
-4. Positive aspects to maintain
+                // Check if there are any user messages
+                const hasUserMessages = conversation.some((msg) => msg.role === 'user');
+                const prompt = hasUserMessages ?
+                    `Hey there! I just watched your flirting session, and I'd love to share my thoughts with you. Please structure your response EXACTLY like this, with all five sections:
+
+1. Conversation Flow and Engagement: Tell me about how your conversation flowed naturally, including specific examples of good transitions and engagement from your messages.
+
+2. Response Quality and Appropriateness: Share your thoughts on the quality of your responses, including specific examples of well-crafted messages and their impact.
+
+3. Areas for Improvement: Let's talk about specific areas where you could improve, using actual examples from your messages.
+
+4. Positive Aspects to Maintain: I want to highlight specific strengths you showed in your messages that you should definitely keep using.
+
+5. Final Thoughts: Give me a brief summary of your overall performance and one key takeaway for your next flirting session.
 
 Conversation:
 ${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 
-Please provide a concise, encouraging analysis that helps the user improve their flirting skills.`;
+IMPORTANT: 
+- Always use 'you' and 'your' when talking about the person (never use 'the user' or third person)
+- Include ALL FIVE sections exactly as numbered above
+- Make sure to end with the Final Thoughts section
+- Keep the tone friendly and encouraging
+- Include specific examples from the messages`
+                    :
+                        `Hey there! I noticed you ended the session without saying anything. Let me share my thoughts with you.
+
+HEART RATING: ❤️ (1 heart)
+Since no conversation took place, the rating is 1 heart.
+
+Please structure your response EXACTLY like this, with all five sections:
+
+1. Conversation Flow and Engagement: Since you didn't engage in the conversation, there wasn't much flow to analyze. This is completely okay - sometimes we need time to gather our thoughts or feel comfortable before speaking up.
+
+2. Response Quality and Appropriateness: While there weren't any responses to analyze, this gives us a great opportunity to discuss how to start conversations. Remember, it's perfectly normal to feel a bit nervous or unsure about what to say.
+
+3. Areas for Improvement: The main area to focus on is taking that first step to engage. Even a simple greeting or question can be a great way to start. Don't worry about being perfect - the most important thing is to be yourself.
+
+4. Positive Aspects to Maintain: Your decision to end the session shows that you're aware of your comfort level, which is actually a positive trait. It's better to be honest about your readiness than to force a conversation you're not comfortable with.
+
+5. Final Thoughts: Remember, everyone starts somewhere! Next time, try starting with something simple like "Hi" or "How are you?" The key is to take that first step, no matter how small it might feel.
+
+IMPORTANT: 
+- Always use 'you' and 'your' when talking about the person (never use 'the user' or third person)
+- Include ALL FIVE sections exactly as numbered above
+- Make sure to end with the Final Thoughts section
+- Keep the tone friendly and encouraging
+- For empty conversations, ALWAYS start with "HEART RATING: ❤️ (1 heart)"`;
                 const response = await openai.chat.completions.create({
                     model: "gpt-4",
                     messages: [
                         {
                             role: "system",
-                            content: "You are a flirting coach analyzing a conversation. Provide constructive, encouraging feedback that helps the user improve their flirting skills."
+                            content: "You are having a friendly chat with a friend about their flirting conversation. You MUST follow these rules:\n1. ALWAYS use 'you' and 'your' (never 'the user' or third person)\n2. ALWAYS include all five numbered sections\n3. ALWAYS end with the Final Thoughts section\n4. Keep the tone friendly and encouraging\n5. Include specific examples from their messages when available\n6. For empty conversations (no user messages), you MUST start your response with 'HEART RATING: ❤️ (1 heart)'\nExample of good feedback: 'You showed great confidence when you...' instead of 'The user showed great confidence...'"
                         },
                         {
                             role: "user",
@@ -440,7 +478,7 @@ Please provide a concise, encouraging analysis that helps the user improve their
                         }
                     ],
                     temperature: 0.7,
-                    max_tokens: 500
+                    max_tokens: 800
                 });
                 console.log('Received analysis from OpenAI:', response.choices[0].message.content);
                 return {
