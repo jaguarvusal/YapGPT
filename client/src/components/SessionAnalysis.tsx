@@ -51,7 +51,15 @@ const SessionAnalysis: React.FC<SessionAnalysisProps> = ({
   }, {});
 
   // Map section titles to their display names and styles
-  const sectionConfig = {
+  type SectionConfig = {
+    [key: string]: {
+      title: string;
+      color: 'blue' | 'purple' | 'yellow' | 'green';
+      number: string;
+    };
+  };
+
+  const sectionConfig: SectionConfig = {
     'Conversation Flow and Engagement': {
       title: 'Conversation Flow',
       color: 'blue',
@@ -127,12 +135,15 @@ const SessionAnalysis: React.FC<SessionAnalysisProps> = ({
     const config = sectionConfig[title];
     if (!config) return null;
 
-    const colorClasses = {
+    const colorClasses: { [key: string]: string } = {
       blue: 'bg-blue-500/20 border-blue-500/30',
       purple: 'bg-purple-500/20 border-purple-500/30',
       yellow: 'bg-yellow-500/20 border-yellow-500/30',
       green: 'bg-green-500/20 border-green-500/30'
     };
+
+    // Remove the section title and number from the content
+    const cleanContent = content.replace(/^\d+\.\s*[^:]+:\s*/i, '');
 
     return (
       <div key={title} className={`${colorClasses[config.color]} rounded-lg p-6 border`}>
@@ -144,7 +155,7 @@ const SessionAnalysis: React.FC<SessionAnalysisProps> = ({
         </h3>
         <div className="prose prose-invert max-w-none">
           <p className="text-gray-200 leading-relaxed whitespace-pre-line">
-            {content}
+            {cleanContent}
           </p>
         </div>
       </div>
@@ -202,15 +213,19 @@ const SessionAnalysis: React.FC<SessionAnalysisProps> = ({
           {/* Full width section for Final Thoughts */}
           {additionalContent && (
             <div className="bg-pink-500/20 rounded-lg p-6 border border-pink-500/30">
-              <h3 className="text-white text-xl font-semibold mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white font-bold">
-                  5
-                </span>
+              <h3 className="text-white text-xl font-semibold mb-4">
                 Final Thoughts
               </h3>
               <div className="prose prose-invert max-w-none">
                 <p className="text-gray-200 leading-relaxed whitespace-pre-line">
-                  {additionalContent}
+                  {additionalContent
+                    .replace(/^Final Thoughts:\s*/i, '')
+                    .replace(/^Hello!.*\n/i, '')
+                    .replace(/^Let's dive into.*\n/i, '')
+                    .replace(/^I'd love to.*\n/i, '')
+                    .replace(/^Here's my.*\n/i, '')
+                    .replace(/^Let me share.*\n/i, '')
+                    .trim()}
                 </p>
               </div>
             </div>
