@@ -430,7 +430,7 @@ Text: "${text}"`;
 
 4. Positive Aspects to Maintain: I want to highlight specific strengths you showed in your messages that you should definitely keep using.
 
-5. Final Thoughts: Give me a brief summary of your overall performance and one key takeaway for your next flirting session.
+Final Thoughts: Write a short, encouraging paragraph summarizing your overall performance and one key takeaway for next time.
 
 Conversation:
 ${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
@@ -438,14 +438,14 @@ ${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 IMPORTANT: 
 - Always use 'you' and 'your' when talking about the person (never use 'the user' or third person)
 - Include ALL FIVE sections exactly as numbered above
-- Make sure to end with the Final Thoughts section
 - Keep the tone friendly and encouraging
-- Include specific examples from the messages`
+- Include specific examples from the messages
+- DO NOT include any heart rating or scoring information in your response
+- DO NOT mention hearts, ratings, or scores in any section
+- Focus only on the conversation feedback and encouragement
+- For the Final Thoughts section, start with just "Final Thoughts:" (no number)`
                     :
                         `Hey there! I noticed you ended the session without saying anything. Let me share my thoughts with you.
-
-HEART RATING: ❤️ (1 heart)
-Since no conversation took place, the rating is 1 heart.
 
 Please structure your response EXACTLY like this, with all five sections:
 
@@ -457,20 +457,22 @@ Please structure your response EXACTLY like this, with all five sections:
 
 4. Positive Aspects to Maintain: Your decision to end the session shows that you're aware of your comfort level, which is actually a positive trait. It's better to be honest about your readiness than to force a conversation you're not comfortable with.
 
-5. Final Thoughts: Remember, everyone starts somewhere! Next time, try starting with something simple like "Hi" or "How are you?" The key is to take that first step, no matter how small it might feel.
+Final Thoughts: Write a short, encouraging paragraph about taking that first step in your next conversation.
 
 IMPORTANT: 
 - Always use 'you' and 'your' when talking about the person (never use 'the user' or third person)
 - Include ALL FIVE sections exactly as numbered above
-- Make sure to end with the Final Thoughts section
 - Keep the tone friendly and encouraging
-- For empty conversations, ALWAYS start with "HEART RATING: ❤️ (1 heart)"`;
+- DO NOT include any heart rating or scoring information in your response
+- DO NOT mention hearts, ratings, or scores in any section
+- Focus only on the conversation feedback and encouragement
+- For the Final Thoughts section, start with just "Final Thoughts:" (no number)`;
                 const response = await openai.chat.completions.create({
                     model: "gpt-4",
                     messages: [
                         {
                             role: "system",
-                            content: "You are having a friendly chat with a friend about their flirting conversation. You MUST follow these rules:\n1. ALWAYS use 'you' and 'your' (never 'the user' or third person)\n2. ALWAYS include all five numbered sections\n3. ALWAYS end with the Final Thoughts section\n4. Keep the tone friendly and encouraging\n5. Include specific examples from their messages when available\n6. For empty conversations (no user messages), you MUST start your response with 'HEART RATING: ❤️ (1 heart)'\nExample of good feedback: 'You showed great confidence when you...' instead of 'The user showed great confidence...'"
+                            content: "You are having a friendly chat with a friend about their flirting conversation. You MUST follow these rules:\n1. ALWAYS use 'you' and 'your' (never 'the user' or third person)\n2. ALWAYS include all five numbered sections\n3. Keep the tone friendly and encouraging\n4. Include specific examples from their messages when available\n5. DO NOT include any heart rating or scoring information\n6. DO NOT mention hearts, ratings, or scores in any section\n7. Focus only on the conversation feedback and encouragement\n8. For the Final Thoughts section, start with just 'Final Thoughts:' (no number)\nExample of good feedback: 'You showed great confidence when you...' instead of 'The user showed great confidence...'"
                         },
                         {
                             role: "user",
