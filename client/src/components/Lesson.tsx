@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { UPLOAD_AUDIO } from '../utils/mutations';
+import { UPLOAD_AUDIO, UPDATE_PROGRESS } from '../utils/mutations';
 import { findLesson } from '../data/lessons';
 import type { Lesson } from '../data/lessons';
 import { useHearts } from '../contexts/HeartsContext';
+import Auth from '../utils/auth';
 
 interface LessonParams {
   unitId: string;
@@ -74,6 +75,8 @@ const Lesson: React.FC = () => {
     { uploadAudio: AudioResponse },
     { input: UploadAudioInput }
   >(UPLOAD_AUDIO);
+
+  const [updateProgress] = useMutation(UPDATE_PROGRESS);
 
   // Load lesson data
   useEffect(() => {
@@ -310,22 +313,58 @@ const Lesson: React.FC = () => {
       const currentLevel = Number(levelId);
       const activeLevel = Number(localStorage.getItem('activeLevel') || '1');
       
+      console.log('Level requirements met:', {
+        currentLevel,
+        activeLevel,
+        shouldUpdate: currentLevel >= activeLevel
+      });
+      
       // Only update active level if this is the current active level or a future level
       if (currentLevel >= activeLevel) {
         const nextLevel = currentLevel + 1;
         
         // Update localStorage with the next level
         localStorage.setItem('activeLevel', nextLevel.toString());
+        console.log('Updated localStorage activeLevel to:', nextLevel);
+        
+        // Update completed levels
+        const completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+        if (!completedLevels.includes(currentLevel)) {
+          completedLevels.push(currentLevel);
+          localStorage.setItem('completedLevels', JSON.stringify(completedLevels));
+          console.log('Updated completedLevels:', completedLevels);
+        }
+        
+        // Sync progress with server if user is logged in
+        if (Auth.loggedIn()) {
+          try {
+            updateProgress({
+              variables: {
+                activeLevel: nextLevel,
+                completedLevels: completedLevels
+              }
+            }).then(({ data }) => {
+              if (data?.updateProgress) {
+                console.log('Progress synced with server:', data.updateProgress);
+              }
+            }).catch(error => {
+              console.error('Error syncing progress with server:', error);
+            });
+          } catch (error) {
+            console.error('Error calling updateProgress mutation:', error);
+          }
+        }
         
         // If we're in the browser, dispatch a custom event to notify Dashboard
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('levelCompleted', {
             detail: { nextLevel }
           }));
+          console.log('Dispatched levelCompleted event with nextLevel:', nextLevel);
         }
       }
     }
-  }, [allRequirementsMet, levelId]);
+  }, [allRequirementsMet, levelId, updateProgress]);
 
   // Update the feedback handling to set allRequirementsMet
   useEffect(() => {

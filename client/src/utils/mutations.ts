@@ -7,6 +7,8 @@ export const ADD_YAPPER = gql`
       yapper {
         _id
         name
+        activeLevel
+        completedLevels
       }
     }
   }
@@ -19,6 +21,8 @@ export const LOGIN_USER = gql`
       yapper {
         _id
         name
+        activeLevel
+        completedLevels
       }
     }
   }
@@ -49,6 +53,17 @@ export const UPLOAD_AUDIO = gql`
       charismaScore
       relevanceScore
       suggestions
+    }
+  }
+`;
+
+export const UPDATE_PROGRESS = gql`
+  mutation updateProgress($activeLevel: Int!, $completedLevels: [Int!]!) {
+    updateProgress(activeLevel: $activeLevel, completedLevels: $completedLevels) {
+      _id
+      name
+      activeLevel
+      completedLevels
     }
   }
 `;

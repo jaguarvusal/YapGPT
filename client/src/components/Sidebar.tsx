@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
+import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS } from '../utils/mutations';
 import Auth from '../utils/auth';
 import passwordIcon from '/assets/password.png';
 import { FaHome, FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
@@ -33,6 +33,7 @@ const Sidebar: React.FC = () => {
 
   const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
+  const [updateProgress] = useMutation(UPDATE_PROGRESS);
 
   const handleNavigation = (path: string, button: string) => {
     navigate(path);
@@ -88,23 +89,50 @@ const Sidebar: React.FC = () => {
 
   const handleSignup = async (event: React.FormEvent) => {
     event.preventDefault();
-    
     if (!Object.values(passwordCriteria).every(Boolean)) {
       setPasswordError('Please meet all password requirements');
       return;
     }
-
     try {
+      // Get local progress before signup
+      const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
+      const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+
+      // Only send required fields to the mutation
+      const { identifier, ...signupData } = formState;
+      
       const { data } = await addYapper({
-        variables: { input: { ...formState } },
+        variables: { input: signupData },
       });
       
       if (data?.addYapper?.token) {
+        // Login first to establish user context
+        Auth.login(data.addYapper.token);
+        
+        // Immediately sync progress after signup
+        try {
+          const { data: progressData } = await updateProgress({
+            variables: {
+              activeLevel: localActiveLevel,
+              completedLevels: localCompletedLevels
+            }
+          });
+          
+          // Update localStorage with the confirmed progress from the server
+          if (progressData?.updateProgress) {
+            localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
+            localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
+          }
+          
+          console.log('Progress synced after signup');
+        } catch (updateError) {
+          console.error('Error syncing progress after signup:', updateError);
+        }
+
         setFormState({ name: '', email: '', password: '', identifier: '' });
         setPasswordError('');
         setShowPasswordTooltip(false);
         setShowPassword(false);
-        Auth.login(data.addYapper.token);
         setShowAuthPopup(false);
       }
     } catch (e) {
@@ -116,14 +144,40 @@ const Sidebar: React.FC = () => {
     event.preventDefault();
     try {
       const { data } = await login({
-        variables: { 
+        variables: {
           identifier: formState.identifier,
-          password: formState.password 
+          password: formState.password
         },
       });
       
       if (data?.login?.token) {
+        // Login first to establish the user context
         Auth.login(data.login.token);
+        
+        // Get local progress
+        const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
+        const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+
+        // Sync progress with server
+        try {
+          const { data: progressData } = await updateProgress({
+            variables: {
+              activeLevel: localActiveLevel,
+              completedLevels: localCompletedLevels
+            }
+          });
+          
+          // Update localStorage with the confirmed progress from the server
+          if (progressData?.updateProgress) {
+            localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
+            localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
+          }
+          
+          console.log('Progress synced after login');
+        } catch (updateError) {
+          console.error('Error syncing progress after login:', updateError);
+        }
+
         setShowAuthPopup(false);
       }
     } catch (e) {

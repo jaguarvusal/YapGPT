@@ -99,6 +99,8 @@ interface Yapper {
   email: string;
   password: string;
   skills: string[];
+  activeLevel: number;
+  completedLevels: number[];
 }
 
 interface YapperArgs {
@@ -165,26 +167,47 @@ const resolvers = {
     },
     login: async (_parent: any, { identifier, password }: { identifier: string; password: string }): Promise<{ token: string; yapper: Yapper }> => {
       try {
+        console.log('Login attempt with:', { identifier });
+        
         // Try to find user by email first
         let yapper = await Yapper.findOne({ email: identifier });
+        console.log('Email search result:', yapper ? 'Found' : 'Not found');
         
         // If not found by email, try to find by name
         if (!yapper) {
           yapper = await Yapper.findOne({ name: identifier });
+          console.log('Name search result:', yapper ? 'Found' : 'Not found');
         }
 
         if (!yapper) {
+          console.log('No user found with identifier:', identifier);
           throw new AuthenticationError('Invalid credentials');
         }
 
         const correctPw = await yapper.isCorrectPassword(password);
+        console.log('Password check result:', correctPw ? 'Correct' : 'Incorrect');
+        
         if (!correctPw) {
           throw new AuthenticationError('Invalid credentials');
         }
 
-        const token = signToken(yapper.name, yapper.email, yapper._id);
-        return { token, yapper };
+        // Ensure we have the complete user data with progress fields
+        const completeYapper = await Yapper.findOne({ _id: yapper._id }).select('+activeLevel +completedLevels');
+        if (!completeYapper) {
+          throw new Error('Failed to retrieve complete user data');
+        }
+
+        console.log('Login successful, user data:', {
+          id: completeYapper._id,
+          name: completeYapper.name,
+          activeLevel: completeYapper.activeLevel,
+          completedLevels: completeYapper.completedLevels
+        });
+
+        const token = signToken(completeYapper.name, completeYapper.email, completeYapper._id);
+        return { token, yapper: completeYapper };
       } catch (error) {
+        console.error('Login error:', error);
         if (error instanceof AuthenticationError) {
           throw error;
         }
@@ -664,6 +687,63 @@ IMPORTANT:
       } catch (error) {
         console.error('Error analyzing conversation:', error);
         throw new Error('Failed to analyze conversation');
+      }
+    },
+    updateProgress: async (_parent: any, { activeLevel, completedLevels }: { activeLevel: number; completedLevels: number[] }, context: Context): Promise<Yapper | null> => {
+      try {
+        console.log('updateProgress called with:', { activeLevel, completedLevels });
+        console.log('Context user:', context.user);
+
+        if (!context.user) {
+          console.error('No user in context');
+          throw new AuthenticationError('You must be logged in to update progress');
+        }
+
+        if (typeof activeLevel !== 'number' || !Array.isArray(completedLevels)) {
+          console.error('Invalid input types:', { 
+            activeLevel: typeof activeLevel, 
+            completedLevels: typeof completedLevels 
+          });
+          throw new Error('Invalid input types');
+        }
+
+        const updateData = {
+          activeLevel,
+          completedLevels: [...new Set(completedLevels)]
+        };
+        console.log('Update data:', updateData);
+
+        // Log the current user data before update
+        const currentUser = await Yapper.findById(context.user._id);
+        console.log('Current user data before update:', {
+          _id: currentUser?._id,
+          activeLevel: currentUser?.activeLevel,
+          completedLevels: currentUser?.completedLevels
+        });
+
+        const updatedYapper = await Yapper.findOneAndUpdate(
+          { _id: context.user._id },
+          { $set: updateData },
+          { new: true, runValidators: true }
+        );
+
+        if (!updatedYapper) {
+          console.error('Failed to update progress - user not found');
+          throw new Error('Failed to update progress');
+        }
+
+        console.log('Progress updated successfully:', {
+          _id: updatedYapper._id,
+          activeLevel: updatedYapper.activeLevel,
+          completedLevels: updatedYapper.completedLevels
+        });
+        return updatedYapper;
+      } catch (error: any) {
+        console.error('Error in updateProgress:', error);
+        if (error instanceof AuthenticationError) {
+          throw error;
+        }
+        throw new Error(`Failed to update progress: ${error.message || 'Unknown error'}`);
       }
     },
   },

@@ -25,6 +25,13 @@ const yapperSchema = new Schema({
             trim: true,
         },
     ],
+    activeLevel: {
+        type: Number,
+        default: 1,
+    },
+    completedLevels: [{
+            type: Number,
+        }],
 }, {
     timestamps: true,
     toJSON: { getters: true },
