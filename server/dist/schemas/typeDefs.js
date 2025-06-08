@@ -5,6 +5,8 @@ const typeDefs = `
     email: String
     password: String
     skills: [String]!
+    activeLevel: Int
+    completedLevels: [Int]
   }
 
   type Auth {
@@ -96,7 +98,7 @@ const typeDefs = `
   type Mutation {
     addYapper(input: YapperInput!): Auth
     login(identifier: String!, password: String!): Auth
-
+    updateProgress(activeLevel: Int!, completedLevels: [Int!]!): Yapper
     addSkill(yapperId: ID!, skill: String!): Yapper
     removeYapper: Yapper
     removeSkill(skill: String!): Yapper

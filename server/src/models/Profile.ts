@@ -8,6 +8,8 @@ interface IYapper extends Document {
   email: string;
   password: string;
   skills: string[];
+  activeLevel: number;
+  completedLevels: number[];
   isCorrectPassword(password: string): Promise<boolean>;
 }
 
@@ -37,6 +39,13 @@ const yapperSchema = new Schema<IYapper>(
         trim: true,
       },
     ],
+    activeLevel: {
+      type: Number,
+      default: 1,
+    },
+    completedLevels: [{
+      type: Number,
+    }],
   },
   {
     timestamps: true,

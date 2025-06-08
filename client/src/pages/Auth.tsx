@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
+import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS } from '../utils/mutations';
 import Auth from '../utils/auth';
 import passwordIcon from "/assets/password.png";
 import welcomeImage from "/assets/welcome.png";
@@ -32,6 +32,7 @@ const AuthPage: React.FC = () => {
 
   const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
+  const [updateProgress] = useMutation(UPDATE_PROGRESS);
 
   useEffect(() => {
     // Trigger fade in on mount
@@ -85,12 +86,41 @@ const AuthPage: React.FC = () => {
     }
 
     try {
+      // Get local progress before signup
+      const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
+      const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+
+      // Only send required fields to the mutation
+      const { identifier, ...signupData } = formState;
+      
       const { data } = await addYapper({
-        variables: { ...formState },
+        variables: { input: signupData },
       });
       
       if (data?.addYapper?.token) {
+        // Login first to establish user context
         Auth.login(data.addYapper.token);
+        
+        // Immediately sync progress after signup
+        try {
+          const { data: progressData } = await updateProgress({
+            variables: {
+              activeLevel: localActiveLevel,
+              completedLevels: localCompletedLevels
+            }
+          });
+          
+          // Update localStorage with the confirmed progress from the server
+          if (progressData?.updateProgress) {
+            localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
+            localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
+          }
+          
+          console.log('Progress synced after signup');
+        } catch (updateError) {
+          console.error('Error syncing progress after signup:', updateError);
+        }
+
         navigate('/me');
       }
     } catch (e) {
@@ -109,7 +139,22 @@ const AuthPage: React.FC = () => {
       });
       
       if (data?.login?.token) {
+        // Login first to establish the user context
         Auth.login(data.login.token);
+        
+        // Get server progress from login response
+        const serverActiveLevel = data.login.yapper.activeLevel;
+        const serverCompletedLevels = data.login.yapper.completedLevels;
+        
+        // Update localStorage with server progress
+        localStorage.setItem('activeLevel', serverActiveLevel.toString());
+        localStorage.setItem('completedLevels', JSON.stringify(serverCompletedLevels));
+        
+        console.log('Progress synced from server after login:', {
+          activeLevel: serverActiveLevel,
+          completedLevels: serverCompletedLevels
+        });
+
         navigate('/me');
       }
     } catch (e) {

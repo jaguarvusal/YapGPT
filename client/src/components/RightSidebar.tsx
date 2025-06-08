@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
+import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS } from '../utils/mutations.js';
 import Auth from '../utils/auth';
 import Hearts from './Hearts.tsx';
 import { useStreak } from '../contexts/StreakContext';
@@ -18,6 +18,7 @@ const RightSidebar: React.FC = () => {
     name: '',
     email: '',
     password: '',
+    identifier: '',
   });
   const [passwordCriteria, setPasswordCriteria] = useState({
     length: false,
@@ -25,9 +26,11 @@ const RightSidebar: React.FC = () => {
     uppercase: false,
   });
   const [passwordError, setPasswordError] = useState('');
+  const [signupError, setSignupError] = useState('');
 
-  const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
+  const [addYapper] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
+  const [updateProgress] = useMutation(UPDATE_PROGRESS);
 
   const scrollToForm = () => {
     const formElement = document.getElementById('auth-form');
@@ -79,6 +82,7 @@ const RightSidebar: React.FC = () => {
 
   const handleSignup = async (event: React.FormEvent) => {
     event.preventDefault();
+    setSignupError(''); // Clear any previous errors
     
     // Check if password meets all criteria
     if (!Object.values(passwordCriteria).every(Boolean)) {
@@ -87,44 +91,98 @@ const RightSidebar: React.FC = () => {
     }
 
     try {
+      // Get local progress before signup
+      const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
+      const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+
+      // Only send required fields to the mutation
+      const { identifier, ...signupData } = formState;
+      
       const { data } = await addYapper({
-        variables: { input: { ...formState } },
+        variables: { input: signupData },
       });
       
       if (data?.addYapper?.token) {
-        // Clear all states first
-        setFormState({ name: '', email: '', password: '' });
+        // Login first to establish user context
+        Auth.login(data.addYapper.token);
+        
+        // Immediately sync progress after signup
+        try {
+          const { data: progressData } = await updateProgress({
+            variables: {
+              activeLevel: localActiveLevel,
+              completedLevels: localCompletedLevels
+            }
+          });
+          
+          // Update localStorage with the confirmed progress from the server
+          if (progressData?.updateProgress) {
+            localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
+            localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
+          }
+          
+          console.log('Progress synced after signup');
+        } catch (updateError) {
+          console.error('Error syncing progress after signup:', updateError);
+        }
+
+        // Clear all states
+        setFormState({ name: '', email: '', password: '', identifier: '' });
         setPasswordError('');
         setShowPasswordTooltip(false);
         setShowPassword(false);
-        
-        // Then login and hide signup form
-        Auth.login(data.addYapper.token);
         setShowSignup(false);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      // Handle duplicate key errors
+      if (e.message?.includes('duplicate key error')) {
+        if (e.message.includes('name_1')) {
+          setSignupError('This username is already taken. Please choose a different one.');
+        } else if (e.message.includes('email_1')) {
+          setSignupError('This email is already registered. Please use a different email or try logging in.');
+        } else {
+          setSignupError('This account already exists. Please try logging in instead.');
+        }
+      } else {
+        setSignupError('Something went wrong. Please try again.');
+      }
+      console.error('Signup error:', e);
     }
   };
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      console.log('Attempting login with:', { identifier: formState.email, password: formState.password });
       const { data } = await login({
         variables: { 
-          identifier: formState.email, 
+          identifier: formState.identifier,
           password: formState.password 
         },
       });
+      
       if (data?.login?.token) {
+        // Login first to establish the user context
         Auth.login(data.login.token);
+        
+        // Get server progress from login response
+        const serverActiveLevel = data.login.yapper.activeLevel;
+        const serverCompletedLevels = data.login.yapper.completedLevels;
+        
+        // Update localStorage with server progress
+        localStorage.setItem('activeLevel', serverActiveLevel.toString());
+        localStorage.setItem('completedLevels', JSON.stringify(serverCompletedLevels));
+        
+        console.log('Progress synced from server after login:', {
+          activeLevel: serverActiveLevel,
+          completedLevels: serverCompletedLevels
+        });
+
+        // Clear form and hide login
         setShowLogin(false);
-        setFormState({ name: '', email: '', password: '' });
+        setFormState({ name: '', email: '', password: '', identifier: '' });
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error('Login error:', e);
-      // The error message will be displayed in the UI through the loginError state
     }
   };
 
@@ -287,7 +345,9 @@ const RightSidebar: React.FC = () => {
               <p className="text-red-500 text-sm">{passwordError}</p>
             )}
             {signupError && (
-              <p className="text-red-500 text-sm">{signupError.message}</p>
+              <div className="mt-2 text-red-500 text-sm">
+                {signupError}
+              </div>
             )}
             <div>
               <button
@@ -309,9 +369,9 @@ const RightSidebar: React.FC = () => {
             <div>
               <input
                 type="text"
-                name="email"
+                name="identifier"
                 placeholder="Email or Username"
-                value={formState.email}
+                value={formState.identifier}
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />

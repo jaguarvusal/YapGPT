@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@apollo/client';
-import { ADD_YAPPER, LOGIN_USER } from '../utils/mutations';
+import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS } from '../utils/mutations';
 import Auth from '../utils/auth';
 import passwordIcon from '/assets/password.png';
 import leaderboardPreview from '/assets/leaderboardpreview.png';
@@ -25,6 +25,7 @@ const Leaderboards: React.FC = () => {
 
   const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
+  const [updateProgress] = useMutation(UPDATE_PROGRESS);
 
   useEffect(() => {
     const password = formState.password;
@@ -73,19 +74,46 @@ const Leaderboards: React.FC = () => {
     }
 
     try {
+      // Get local progress before signup
+      const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
+      const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+
+      // Only send required fields to the mutation
+      const { identifier, ...signupData } = formState;
+      
       const { data } = await addYapper({
-        variables: { input: { ...formState } },
+        variables: { input: signupData },
       });
       
       if (data?.addYapper?.token) {
-        // Clear all states first
+        // Login first to establish user context
+        Auth.login(data.addYapper.token);
+        
+        // Immediately sync progress after signup
+        try {
+          const { data: progressData } = await updateProgress({
+            variables: {
+              activeLevel: localActiveLevel,
+              completedLevels: localCompletedLevels
+            }
+          });
+          
+          // Update localStorage with the confirmed progress from the server
+          if (progressData?.updateProgress) {
+            localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
+            localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
+          }
+          
+          console.log('Progress synced after signup');
+        } catch (updateError) {
+          console.error('Error syncing progress after signup:', updateError);
+        }
+
+        // Clear all states
         setFormState({ name: '', email: '', password: '', identifier: '' });
         setPasswordError('');
         setShowPasswordTooltip(false);
         setShowPassword(false);
-        
-        // Then login and hide signup form
-        Auth.login(data.addYapper.token);
         setActiveForm(null);
       }
     } catch (e) {
@@ -104,7 +132,22 @@ const Leaderboards: React.FC = () => {
       });
       
       if (data?.login?.token) {
+        // Login first to establish the user context
         Auth.login(data.login.token);
+        
+        // Get server progress from login response
+        const serverActiveLevel = data.login.yapper.activeLevel;
+        const serverCompletedLevels = data.login.yapper.completedLevels;
+        
+        // Update localStorage with server progress
+        localStorage.setItem('activeLevel', serverActiveLevel.toString());
+        localStorage.setItem('completedLevels', JSON.stringify(serverCompletedLevels));
+        
+        console.log('Progress synced from server after login:', {
+          activeLevel: serverActiveLevel,
+          completedLevels: serverCompletedLevels
+        });
+
         setActiveForm(null);
       }
     } catch (e) {
@@ -188,37 +231,15 @@ const Leaderboards: React.FC = () => {
                 <img 
                   src={passwordIcon} 
                   alt="Toggle password visibility" 
-                  className={`w-8 h-8 transition-opacity ${showPassword ? 'opacity-50' : 'opacity-100'}`}
+                  className="w-5 h-5"
                 />
               </button>
             </div>
-            {/* Password Criteria Tooltip */}
-            {showPasswordTooltip && (
-              <div className="relative w-full bg-gray-800 rounded-lg shadow-lg p-4 border-2 border-gray-600 z-50 mb-32">
-                <div className="space-y-2">
-                  <p className={`text-sm ${passwordCriteria.length ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordCriteria.length ? '✓' : '○'} 8+ Characters
-                  </p>
-                  <p className={`text-sm ${passwordCriteria.lowercase ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordCriteria.lowercase ? '✓' : '○'} At least one lowercase letter
-                  </p>
-                  <p className={`text-sm ${passwordCriteria.uppercase ? 'text-green-500' : 'text-gray-400'}`}>
-                    {passwordCriteria.uppercase ? '✓' : '○'} At least one uppercase letter
-                  </p>
-                </div>
-              </div>
-            )}
-            {passwordError && (
-              <p className="text-red-500 text-sm">{passwordError}</p>
-            )}
-            {signupError && (
-              <p className="text-red-500 text-sm">{signupError.message}</p>
-            )}
             <button
               type="submit"
-              className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-all duration-150 text-center border-b-4 border-purple-600 active:translate-y-1 active:border-b-0 uppercase font-medium"
+              className="w-full bg-[#e15831] text-white py-2 px-4 rounded-lg hover:bg-[#c94d2b] transition-all duration-150 text-center border-b-4 border-[#b34426] active:translate-y-1 active:border-b-0 uppercase font-medium"
             >
-              Create Account
+              Sign Up
             </button>
           </form>
         </div>
@@ -227,7 +248,7 @@ const Leaderboards: React.FC = () => {
       {/* Login Form */}
       {activeForm === 'login' && (
         <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-80 border-4 border-dashed border-[#17475c] animate-fadeIn">
-          <h2 className="text-lg font-semibold mb-6 text-black">Log In</h2>
+          <h2 className="text-lg font-semibold mb-6 text-black">Welcome Back!</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <input
@@ -256,16 +277,13 @@ const Leaderboards: React.FC = () => {
                 <img 
                   src={passwordIcon} 
                   alt="Toggle password visibility" 
-                  className={`w-8 h-8 transition-opacity ${showPassword ? 'opacity-50' : 'opacity-100'}`}
+                  className="w-5 h-5"
                 />
               </button>
             </div>
-            {loginError && (
-              <p className="text-red-500 text-sm">{loginError.message}</p>
-            )}
             <button
               type="submit"
-              className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-all duration-150 text-center border-b-4 border-purple-600 active:translate-y-1 active:border-b-0 uppercase font-medium"
+              className="w-full bg-[#17475c] text-white py-2 px-4 rounded-lg hover:bg-[#1a5266] transition-all duration-150 text-center border-b-4 border-[#123a4c] active:translate-y-1 active:border-b-0 uppercase font-medium"
             >
               Log In
             </button>
@@ -273,6 +291,7 @@ const Leaderboards: React.FC = () => {
         </div>
       )}
 
+      {/* Leaderboard Preview Image */}
       <img 
         src={leaderboardPreview} 
         alt="Leaderboard Preview" 
@@ -282,4 +301,4 @@ const Leaderboards: React.FC = () => {
   );
 };
 
-export default Leaderboards; 
+export default Leaderboards;

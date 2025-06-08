@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
-import { QUERY_YAPPERS } from '../utils/queries';
+import { QUERY_YAPPERS, QUERY_ME } from '../utils/queries';
 
 // Define unit character images using new URL() approach
 const unitImages = {
@@ -55,33 +55,57 @@ const Dashboard: React.FC = () => {
   const [showSkipConfirmation, setShowSkipConfirmation] = useState<{unit: number, level: number} | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync with localStorage on mount
+  // Query for logged in user's data
+  const { data: userData } = useQuery(QUERY_ME);
+
+  // Sync with localStorage and database on mount
   useEffect(() => {
-    const savedLevel = localStorage.getItem('activeLevel');
-    if (savedLevel) {
-      const level = parseInt(savedLevel, 10);
-      setActiveLevel(level);
-      const unit = Math.ceil(level / 5);
-      setCurrentUnit(unit);
-
-      // Set initial scroll position to the current unit
-      const scrollContainer = document.getElementById('scroll-container');
-      const rightSidebar = document.getElementById('right-sidebar-scroll');
-      if (!scrollContainer || !rightSidebar) return;
-
-      const unitSections = scrollContainer.querySelectorAll('[data-unit-section]');
-      const targetSection = unitSections[unit - 1];
-      if (targetSection) {
-        const rect = targetSection.getBoundingClientRect();
-        const containerRect = scrollContainer.getBoundingClientRect();
-        // Add extra padding for all units to prevent header overlap
-        const extraPadding = 100;
-        scrollContainer.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop - extraPadding;
-        rightSidebar.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop - extraPadding;
+    if (userData?.me) {
+      // If user is logged in, use database progress
+      const dbActiveLevel = userData.me.activeLevel;
+      const dbCompletedLevels = userData.me.completedLevels;
+      
+      console.log('Syncing with database progress:', {
+        activeLevel: dbActiveLevel,
+        completedLevels: dbCompletedLevels
+      });
+      
+      // Update localStorage with database progress
+      localStorage.setItem('activeLevel', dbActiveLevel.toString());
+      localStorage.setItem('completedLevels', JSON.stringify(dbCompletedLevels));
+      
+      // Update state with database progress
+      setActiveLevel(dbActiveLevel);
+      setCurrentUnit(Math.ceil(dbActiveLevel / 5));
+    } else {
+      // If not logged in, use localStorage progress
+      const savedLevel = localStorage.getItem('activeLevel');
+      if (savedLevel) {
+        const level = parseInt(savedLevel, 10);
+        setActiveLevel(level);
+        const unit = Math.ceil(level / 5);
+        setCurrentUnit(unit);
       }
     }
+
+    // Set initial scroll position to the current unit
+    const scrollContainer = document.getElementById('scroll-container');
+    const rightSidebar = document.getElementById('right-sidebar-scroll');
+    if (!scrollContainer || !rightSidebar) return;
+
+    const unitSections = scrollContainer.querySelectorAll('[data-unit-section]');
+    const targetSection = unitSections[currentUnit - 1];
+    if (targetSection) {
+      const rect = targetSection.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      // Add extra padding for all units to prevent header overlap
+      const extraPadding = 100;
+      scrollContainer.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop - extraPadding;
+      rightSidebar.scrollTop = rect.top - containerRect.top + scrollContainer.scrollTop - extraPadding;
+    }
+    
     setIsInitialized(true);
-  }, []);
+  }, [userData, currentUnit]);
 
   // Handle scroll events only after initialization
   useEffect(() => {
