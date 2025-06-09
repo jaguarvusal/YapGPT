@@ -588,33 +588,38 @@ Text: "${text}"`;
         analyzeConversation: async (_, { conversation }) => {
             try {
                 console.log('Received conversation for analysis:', conversation);
+                // Filter out assistant messages before analysis
+                const userMessages = conversation.filter((msg) => msg.role === 'user');
                 // Check if there are any user messages
-                const hasUserMessages = conversation.some((msg) => msg.role === 'user');
+                const hasUserMessages = userMessages.length > 0;
                 const prompt = hasUserMessages ?
-                    `Hey there! I just watched your flirting session, and I'd love to share my thoughts with you. Please structure your response EXACTLY like this, with all five sections:
+                    `Hey there! I just watched your flirting session, and I'd love to share my thoughts with you. I will ONLY analyze YOUR messages, which are:
 
-1. Conversation Flow and Engagement: Tell me about how your conversation flowed naturally, including specific examples of good transitions and engagement from your messages.
+${userMessages.map(msg => msg.content).join('\n')}
 
-2. Response Quality and Appropriateness: Share your thoughts on the quality of your responses, including specific examples of well-crafted messages and their impact.
+Please structure your response EXACTLY like this, with all five sections:
 
-3. Areas for Improvement: Let's talk about specific areas where you could improve, using actual examples from your messages.
+1. Conversation Flow and Engagement: Tell me about how YOUR messages flowed naturally, including specific examples of good transitions and engagement from YOUR messages. ONLY analyze the messages shown above.
 
-4. Positive Aspects to Maintain: I want to highlight specific strengths you showed in your messages that you should definitely keep using.
+2. Response Quality and Appropriateness: Share your thoughts on the quality of YOUR responses, including specific examples of well-crafted messages and their impact. ONLY analyze the messages shown above.
 
-Final Thoughts: Write a short, encouraging paragraph summarizing your overall performance and one key takeaway for next time.
+3. Areas for Improvement: Let's talk about specific areas where YOU could improve, using actual examples from YOUR messages. Focus on what YOU said and how it could be enhanced. ONLY analyze the messages shown above.
 
-Conversation:
-${conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+4. Positive Aspects to Maintain: I want to highlight specific strengths YOU showed in YOUR messages that you should definitely keep using. Focus on YOUR communication style and approach. ONLY analyze the messages shown above.
+
+Final Thoughts: Write a short, encouraging paragraph summarizing YOUR overall performance and one key takeaway for next time.
 
 IMPORTANT: 
 - Always use 'you' and 'your' when talking about the person (never use 'the user' or third person)
 - Include ALL FIVE sections exactly as numbered above
 - Keep the tone friendly and encouraging
-- Include specific examples from the messages
+- ONLY analyze the messages shown above
 - DO NOT include any heart rating or scoring information in your response
 - DO NOT mention hearts, ratings, or scores in any section
 - Focus only on the conversation feedback and encouragement
-- For the Final Thoughts section, start with just "Final Thoughts:" (no number)`
+- For the Final Thoughts section, start with just "Final Thoughts:" (no number)
+- ONLY analyze the messages shown above, which are YOUR messages
+- DO NOT analyze any other messages that might be in the conversation`
                     :
                         `Hey there! I noticed you ended the session without saying anything. Let me share my thoughts with you.
 
@@ -643,7 +648,7 @@ IMPORTANT:
                     messages: [
                         {
                             role: "system",
-                            content: "You are having a friendly chat with a friend about their flirting conversation. You MUST follow these rules:\n1. ALWAYS use 'you' and 'your' (never 'the user' or third person)\n2. ALWAYS include all five numbered sections\n3. Keep the tone friendly and encouraging\n4. Include specific examples from their messages when available\n5. DO NOT include any heart rating or scoring information\n6. DO NOT mention hearts, ratings, or scores in any section\n7. Focus only on the conversation feedback and encouragement\n8. For the Final Thoughts section, start with just 'Final Thoughts:' (no number)\nExample of good feedback: 'You showed great confidence when you...' instead of 'The user showed great confidence...'"
+                            content: "You are having a friendly chat with a friend about their flirting conversation. You MUST follow these rules:\n1. ALWAYS use 'you' and 'your' (never 'the user' or third person)\n2. ALWAYS include all five numbered sections\n3. Keep the tone friendly and encouraging\n4. ONLY analyze the messages provided in the prompt\n5. DO NOT include any heart rating or scoring information\n6. DO NOT mention hearts, ratings, or scores in any section\n7. Focus only on the conversation feedback and encouragement\n8. For the Final Thoughts section, start with just 'Final Thoughts:' (no number)\n9. ONLY analyze the messages provided in the prompt\n10. DO NOT analyze any other messages\nExample of good feedback: 'You showed great confidence when you...' instead of 'The user showed great confidence...'"
                         },
                         {
                             role: "user",
