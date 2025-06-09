@@ -26,24 +26,24 @@ export const StreakProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Initialize or update streak data
   useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const lastShownPopup = localStorage.getItem('lastShownStreakPopup');
+
+    // Show popup if we haven't shown it today
+    if (lastShownPopup !== today) {
+      setShowStreakPopup(true);
+      localStorage.setItem('lastShownStreakPopup', today);
+    }
+
     if (!Auth.loggedIn()) {
       setStreak(1);
       return;
     }
 
     if (userData?.me) {
-      const today = new Date().toISOString().split('T')[0];
-      const lastShownPopup = localStorage.getItem('lastShownStreakPopup');
-      
       // Update local state with server data
       setStreak(userData.me.streak);
       setLastLoginDate(userData.me.lastLoginDate);
-
-      // Show popup if we haven't shown it today
-      if (lastShownPopup !== today) {
-        setShowStreakPopup(true);
-        localStorage.setItem('lastShownStreakPopup', today);
-      }
 
       // Sync with server to update streak if needed
       updateHeartsAndStreak({

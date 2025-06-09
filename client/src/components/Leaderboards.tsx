@@ -226,57 +226,52 @@ const Leaderboards: React.FC = () => {
         avatar: currentUser.avatar,
         activeLevel: currentUser.activeLevel || 1
       },
-      ...(currentUser.following || []).map((user: any) => {
-        console.log('Following user data:', user); // Debug log
-        return {
-          _id: user._id,
-          name: user.name,
-          avatar: user.avatar,
-          activeLevel: user.activeLevel || 1
-        };
-      })
+      ...(currentUser.following || []).map((user: any) => ({
+        _id: user._id,
+        name: user.name,
+        avatar: user.avatar,
+        activeLevel: user.activeLevel || 1
+      }))
     ];
 
     // Sort by active level in descending order
     leaderboardUsers.sort((a, b) => (b.activeLevel || 1) - (a.activeLevel || 1));
 
-    console.log('Final leaderboard users:', leaderboardUsers); // Debug log
-
     return (
-      <div className="mt-6 mb-8 bg-[#17475c] backdrop-blur-md rounded-xl p-4 shadow-lg border-4 border-[#17475c] w-[600px]">
+      <div className="mt-6 mb-8 bg-[#17475c] backdrop-blur-md rounded-xl p-3 md:p-4 shadow-lg border-4 border-[#17475c] w-full">
         {/* Column Titles */}
-        <div className="flex items-center space-x-4 mb-3 px-3">
-          <span className="text-[#e15831] font-bold w-12">RANK</span>
-          <div className="w-14"></div>
-          <span className="text-[#e15831] font-bold flex-1">WHO?</span>
-          <span className="text-[#e15831] font-bold">LEVEL</span>
+        <div className="flex items-center space-x-2 md:space-x-4 mb-3 px-2 md:px-3">
+          <span className="text-[#e15831] font-bold w-8 md:w-12 text-sm md:text-base">RANK</span>
+          <div className="w-10 md:w-14"></div>
+          <span className="text-[#e15831] font-bold flex-1 text-sm md:text-base">WHO?</span>
+          <span className="text-[#e15831] font-bold text-sm md:text-base">LEVEL</span>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2 md:space-y-3">
           {leaderboardUsers.map((user, index) => (
             <div 
               key={user._id} 
-              className={`flex items-center space-x-4 p-3 rounded-lg ${
+              className={`flex items-center space-x-2 md:space-x-4 p-2 md:p-3 rounded-lg ${
                 user._id === currentUser._id 
                   ? 'bg-[#e15831]' 
                   : 'bg-[#1a5266]'
               }`}
             >
-              <div className="flex items-center w-12">
-                <span className={`font-bold ${user._id === currentUser._id ? 'text-black' : 'text-white'}`}>
+              <div className="flex items-center w-8 md:w-12">
+                <span className={`font-bold text-sm md:text-base ${user._id === currentUser._id ? 'text-black' : 'text-white'}`}>
                   {index + 1}
                 </span>
                 {index === 0 && (
-                  <img src="/assets/gold.png" alt="Gold Medal" className="w-10 h-10 ml-1" />
+                  <img src="/assets/gold.png" alt="Gold Medal" className="w-8 h-8 md:w-10 md:h-10 ml-1" />
                 )}
                 {index === 1 && (
-                  <img src="/assets/silver.png" alt="Silver Medal" className="w-10 h-10 ml-1" />
+                  <img src="/assets/silver.png" alt="Silver Medal" className="w-8 h-8 md:w-10 md:h-10 ml-1" />
                 )}
                 {index === 2 && (
-                  <img src="/assets/bronze.png" alt="Bronze Medal" className="w-10 h-10 ml-1" />
+                  <img src="/assets/bronze.png" alt="Bronze Medal" className="w-8 h-8 md:w-10 md:h-10 ml-1" />
                 )}
               </div>
               <div 
-                className="w-14 h-14 rounded-full overflow-hidden border-4 border-black flex-shrink-0"
+                className="w-10 h-10 md:w-14 md:h-14 rounded-full overflow-hidden border-2 md:border-4 border-black flex-shrink-0"
                 style={{ backgroundColor: getRandomColor(user.name) }}
               >
                 {user.avatar ? (
@@ -286,13 +281,13 @@ const Leaderboards: React.FC = () => {
                     className="w-full h-full object-cover object-bottom translate-y-[15%]"
                   />
                 ) : (
-                  <DefaultAvatar username={user.name} className="w-full h-full text-2xl" />
+                  <DefaultAvatar username={user.name} className="w-full h-full text-xl md:text-2xl" />
                 )}
               </div>
-              <span className={`font-medium flex-1 ${user._id === currentUser._id ? 'text-black' : 'text-white'}`}>
+              <span className={`font-medium flex-1 text-sm md:text-base ${user._id === currentUser._id ? 'text-black' : 'text-white'}`}>
                 {user.name}
               </span>
-              <span className={`font-bold ${user._id === currentUser._id ? 'text-black' : 'text-white'}`}>
+              <span className={`font-bold text-sm md:text-base ${user._id === currentUser._id ? 'text-black' : 'text-white'}`}>
                 Level {user.activeLevel}
               </span>
             </div>
@@ -303,24 +298,28 @@ const Leaderboards: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center pt-4">
+    <div className="flex-1 flex flex-col items-center pt-4 px-4">
       <img 
         src="/assets/medals.png" 
         alt="Medals" 
-        className="w-64 h-auto mb-2"
+        className="w-48 md:w-64 h-auto mb-2"
       />
-      <h1 className="text-3xl font-bold text-black mb-1">
+      <h1 className="text-2xl md:text-3xl font-bold text-black mb-1 text-center">
         {isLoggedIn ? "Welcome to Yap League!" : "Unlock Leaderboards!"}
       </h1>
-      <p className="text-gray-600 text-base mb-4">
+      <p className="text-gray-600 text-sm md:text-base mb-4 text-center">
         {isLoggedIn ? "Follow more friends to join your Yap League adventure!" : "Create an account or login to start competing"}
       </p>
       
-      {isLoggedIn && renderLeaderboard()}
+      {isLoggedIn && (
+        <div className="w-full max-w-[600px]">
+          {renderLeaderboard()}
+        </div>
+      )}
       
       {!isLoggedIn && (
         <>
-          <div className="flex space-x-3 w-80">
+          <div className="flex space-x-3 w-full max-w-[320px]">
             <button 
               onClick={() => handleFormToggle('signup')}
               className="w-1/2 bg-[#e15831] text-white py-2 px-4 rounded-lg hover:bg-[#c94d2b] transition-all duration-150 text-center border-b-4 border-[#b34426] active:translate-y-1 active:border-b-0 uppercase font-medium"
@@ -337,7 +336,7 @@ const Leaderboards: React.FC = () => {
 
           {/* Signup Form */}
           {activeForm === 'signup' && (
-            <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-80 border-4 border-dashed border-[#17475c] animate-fadeIn">
+            <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-full max-w-[320px] border-4 border-dashed border-[#17475c] animate-fadeIn">
               <h2 className="text-lg font-semibold mb-6 text-black">Create a Profile</h2>
               <form onSubmit={handleSignup} className="space-y-4">
                 <div>
@@ -401,7 +400,7 @@ const Leaderboards: React.FC = () => {
 
           {/* Login Form */}
           {activeForm === 'login' && (
-            <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-80 border-4 border-dashed border-[#17475c] animate-fadeIn">
+            <div ref={formRef} className="mt-4 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 w-full max-w-[320px] border-4 border-dashed border-[#17475c] animate-fadeIn">
               <h2 className="text-lg font-semibold mb-6 text-black">Welcome Back!</h2>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
@@ -449,7 +448,7 @@ const Leaderboards: React.FC = () => {
           <img 
             src={leaderboardPreview} 
             alt="Leaderboard Preview" 
-            className="w-[400px] h-auto mt-4"
+            className="w-full max-w-[320px] h-auto mt-4"
           />
         </>
       )}
