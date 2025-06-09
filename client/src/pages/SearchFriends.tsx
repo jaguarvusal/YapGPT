@@ -188,59 +188,59 @@ const SearchFriends: React.FC = () => {
     <div className="flex flex-col w-full relative">
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-8 right-[calc(4rem+4px)] bg-[#18475c] hover:bg-[#153d4f] text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-colors shadow-md"
+        className="absolute top-4 md:top-8 right-4 md:right-[calc(4rem+4px)] bg-[#18475c] hover:bg-[#153d4f] text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-colors shadow-md"
       >
         <FaArrowLeft />
         Back
       </button>
-      <div className="px-24 pt-8">
-        <h1 className="text-3xl font-bold text-black mb-8">
+      <div className="px-4 md:px-24 pt-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-black mb-8">
           Search for friends
         </h1>
       </div>
-      <div className="px-24 pr-4">
+      <div className="px-4 md:px-24 md:pr-4">
         <div className="flex flex-col">
-          <div className="flex items-center bg-[#17475c]/80 rounded-[2rem] px-4 py-5 w-[calc(100%-4rem)] border-8 border-black/80 overflow-hidden">
-            <img src={passwordIcon} alt="Search" className="w-10 h-10 mr-3" />
+          <div className="flex items-center bg-[#17475c]/80 rounded-[2rem] px-4 py-5 w-full md:w-[calc(100%-4rem)] border-4 md:border-8 border-black/80 overflow-hidden">
+            <img src={passwordIcon} alt="Search" className="w-8 h-8 md:w-10 md:h-10 mr-3" />
             <input
               type="text"
               placeholder="Search by username"
               value={searchText}
               onChange={handleInputChange}
               onKeyDown={handleSearch}
-              className="w-full outline-none text-white placeholder-gray-400 bg-transparent text-xl placeholder:text-xl"
+              className="w-full outline-none text-white placeholder-gray-400 bg-transparent text-lg md:text-xl placeholder:text-lg md:placeholder:text-xl"
             />
             {searchText && (
               <button 
                 onClick={handleClear}
-                className="ml-3 w-7 h-7 rounded-full bg-[#e15831] flex items-center justify-center shrink-0"
+                className="ml-3 w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#e15831] flex items-center justify-center shrink-0"
               >
-                <span className="text-black text-lg font-bold leading-none -mt-0.5">×</span>
+                <span className="text-black text-base md:text-lg font-bold leading-none -mt-0.5">×</span>
               </button>
             )}
           </div>
-          <div className="h-[2px] bg-gray-800 w-[calc(100%-4rem)] mt-12"></div>
+          <div className="h-[2px] bg-gray-800 w-full md:w-[calc(100%-4rem)] mt-8 md:mt-12"></div>
           {searchText && !hasSearched && (
-            <p className="text-gray-600 text-lg mt-4 ml-4">
+            <p className="text-gray-600 text-base md:text-lg mt-4 ml-4">
               Press Enter to see results for "{searchText}"
             </p>
           )}
           
           {yappersLoading ? (
             <div className="flex flex-col items-center mt-8">
-              <p className="text-gray-600 text-xl">Loading users...</p>
+              <p className="text-gray-600 text-lg md:text-xl">Loading users...</p>
             </div>
           ) : yappersError ? (
             <div className="flex flex-col items-center mt-8">
-              <p className="text-red-600 text-xl">Error loading users. Please try again.</p>
+              <p className="text-red-600 text-lg md:text-xl">Error loading users. Please try again.</p>
             </div>
           ) : searchResults.length > 0 ? (
-            <div className="mt-8 w-[calc(100%-8rem)] mx-auto flex justify-center">
+            <div className="mt-8 w-full md:w-[calc(100%-8rem)] mx-auto flex justify-center">
               <div className="w-full">
                 {searchResults.map((user, index) => (
                   <div 
                     key={user._id}
-                    className={`bg-[#17475c] p-6 border-2 border-black shadow-md hover:shadow-lg transition-shadow ${
+                    className={`bg-[#17475c] p-4 md:p-6 border-2 border-black shadow-md hover:shadow-lg transition-shadow ${
                       index === 0 ? 'rounded-t-2xl' : ''
                     } ${
                       index === searchResults.length - 1 ? 'rounded-b-2xl mb-8' : ''
@@ -250,7 +250,7 @@ const SearchFriends: React.FC = () => {
                   >
                     <div className="flex items-center">
                       <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0 border-4 border-black mr-4 overflow-hidden"
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0 border-4 border-black mr-3 md:mr-4 overflow-hidden"
                         style={{ backgroundColor: getRandomColor(user.name) }}
                       >
                         {user.avatar ? (
@@ -260,22 +260,22 @@ const SearchFriends: React.FC = () => {
                             className="w-full h-full object-cover object-bottom translate-y-[15%]"
                           />
                         ) : (
-                          <DefaultAvatar username={user.name} className="w-full h-full text-2xl" />
+                          <DefaultAvatar username={user.name} className="w-full h-full text-xl md:text-2xl" />
                         )}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-white">{user.name}</h3>
-                        <p className="text-gray-300 text-sm mt-1">{user.email || 'No email available'}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg md:text-xl font-semibold text-white truncate">{user.name}</h3>
+                        <p className="text-gray-300 text-sm mt-1 truncate">{user.email || 'No email available'}</p>
                       </div>
                       <button 
                         onClick={() => handleFollow(user._id)}
-                        className={`flex items-center px-4 py-2 rounded-lg transition-colors duration-150 border-b-4 active:translate-y-1 active:border-b-0 ${
+                        className={`flex items-center px-3 md:px-4 py-2 rounded-lg transition-colors duration-150 border-b-4 active:translate-y-1 active:border-b-0 text-sm md:text-base whitespace-nowrap ${
                           user.isFollowing
                             ? 'bg-purple-500 text-black hover:bg-purple-600 border-purple-600'
                             : 'bg-[#2ECC71] text-white hover:bg-[#27AE60] border-[#27AE60]'
                         }`}
                       >
-                        <FaUserPlus className="w-5 h-5 mr-2" />
+                        <FaUserPlus className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
                         {user.isFollowing ? 'FOLLOWING' : 'FOLLOW'}
                       </button>
                     </div>
@@ -285,7 +285,7 @@ const SearchFriends: React.FC = () => {
             </div>
           ) : hasSearched ? (
             <div className="flex flex-col items-center mt-8">
-              <p className="text-gray-600 text-xl">No users found matching "{searchText}"</p>
+              <p className="text-gray-600 text-lg md:text-xl">No users found matching "{searchText}"</p>
             </div>
           ) : null}
         </div>

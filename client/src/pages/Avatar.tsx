@@ -85,17 +85,17 @@ const Avatar: React.FC = () => {
     <div className="container mx-auto px-4 py-8 relative">
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-8 right-[calc(4rem+4px)] bg-[#18475c] hover:bg-[#153d4f] text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-colors shadow-md"
+        className="absolute top-4 md:top-8 right-4 md:right-[calc(4rem+4px)] bg-[#18475c] hover:bg-[#153d4f] text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-colors shadow-md"
       >
         <FaArrowLeft />
         Back
       </button>
-      <div className="px-24 pt-8">
-        <h1 className="text-3xl font-bold text-black mb-8">
+      <div className="px-4 md:px-24 pt-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-black mb-8">
           Choose Your Avatar
         </h1>
       </div>
-      <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto mt-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-2xl mx-auto mt-8 px-4 md:px-0">
         {avatars.map((avatar) => (
           <div
             key={avatar}
