@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS } from '../utils/mutations';
+import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS, UPDATE_HEARTS_AND_STREAK } from '../utils/mutations';
 import Auth from '../utils/auth';
 import passwordIcon from "/assets/password.png";
 import welcomeImage from "/assets/welcome.png";
@@ -33,6 +33,7 @@ const AuthPage: React.FC = () => {
   const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
   const [updateProgress] = useMutation(UPDATE_PROGRESS);
+  const [updateHeartsAndStreak] = useMutation(UPDATE_HEARTS_AND_STREAK);
 
   useEffect(() => {
     // Trigger fade in on mount
@@ -89,6 +90,10 @@ const AuthPage: React.FC = () => {
       // Get local progress before signup
       const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
       const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+      const localHearts = Number(localStorage.getItem('hearts') || '5');
+      const localHeartRegenerationTimer = localStorage.getItem('heartRegenerationTimer');
+      const localStreak = Number(localStorage.getItem('streak') || '0');
+      const today = new Date().toISOString(); // Always use current date for new accounts
 
       // Only send required fields to the mutation
       const { identifier, ...signupData } = formState;
@@ -103,10 +108,21 @@ const AuthPage: React.FC = () => {
         
         // Immediately sync progress after signup
         try {
+          // Update progress (level and completed levels)
           const { data: progressData } = await updateProgress({
             variables: {
               activeLevel: localActiveLevel,
               completedLevels: localCompletedLevels
+            }
+          });
+          
+          // Update hearts and streak
+          const { data: heartsData } = await updateHeartsAndStreak({
+            variables: {
+              hearts: localHearts,
+              streak: localStreak,
+              lastLoginDate: today, // Use current date
+              heartRegenerationTimer: localHeartRegenerationTimer
             }
           });
           
@@ -115,16 +131,42 @@ const AuthPage: React.FC = () => {
             localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
             localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
           }
+
+          if (heartsData?.updateHeartsAndStreak) {
+            localStorage.setItem('hearts', heartsData.updateHeartsAndStreak.hearts.toString());
+            if (heartsData.updateHeartsAndStreak.heartRegenerationTimer) {
+              localStorage.setItem('heartRegenerationTimer', heartsData.updateHeartsAndStreak.heartRegenerationTimer);
+            }
+            localStorage.setItem('streak', heartsData.updateHeartsAndStreak.streak.toString());
+            localStorage.setItem('lastLoginDate', today); // Use current date
+          }
           
           console.log('Progress synced after signup');
         } catch (updateError) {
           console.error('Error syncing progress after signup:', updateError);
         }
 
+        // Clear all states
+        setFormState({ name: '', email: '', password: '', identifier: '' });
+        setPasswordError('');
+        setShowPasswordTooltip(false);
+        setShowPassword(false);
         navigate('/me');
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      // Handle duplicate key errors
+      if (e.message?.includes('duplicate key error')) {
+        if (e.message.includes('name_1')) {
+          setError('This username is already taken. Please choose a different one.');
+        } else if (e.message.includes('email_1')) {
+          setError('This email is already registered. Please use a different email or try logging in.');
+        } else {
+          setError('This account already exists. Please try logging in instead.');
+        }
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+      console.error('Signup error:', e);
     }
   };
 
@@ -142,17 +184,27 @@ const AuthPage: React.FC = () => {
         // Login first to establish the user context
         Auth.login(data.login.token);
         
-        // Get server progress from login response
+        // Get server data from login response
         const serverActiveLevel = data.login.yapper.activeLevel;
         const serverCompletedLevels = data.login.yapper.completedLevels;
+        const serverHearts = data.login.yapper.hearts;
+        const serverHeartRegenerationTimer = data.login.yapper.heartRegenerationTimer;
         
-        // Update localStorage with server progress
+        // Update localStorage with server data
         localStorage.setItem('activeLevel', serverActiveLevel.toString());
         localStorage.setItem('completedLevels', JSON.stringify(serverCompletedLevels));
+        localStorage.setItem('hearts', serverHearts.toString());
+        if (serverHeartRegenerationTimer) {
+          localStorage.setItem('heartRegenerationTimer', serverHeartRegenerationTimer);
+        } else {
+          localStorage.removeItem('heartRegenerationTimer');
+        }
         
-        console.log('Progress synced from server after login:', {
+        console.log('Data synced from server after login:', {
           activeLevel: serverActiveLevel,
-          completedLevels: serverCompletedLevels
+          completedLevels: serverCompletedLevels,
+          hearts: serverHearts,
+          heartRegenerationTimer: serverHeartRegenerationTimer
         });
 
         navigate('/me');

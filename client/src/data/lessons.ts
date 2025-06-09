@@ -381,7 +381,6 @@ export const findLesson = (unitId: number, levelId: number): Lesson | undefined 
   const unit = lessonsData.units.find(u => u.unit === unitId);
   if (!unit) return undefined;
   
-  // Convert absolute level to unit-relative level (1-5)
-  const levelInUnit = ((levelId - 1) % 5) + 1;
-  return unit.lessons.find(l => l.level === levelInUnit);
+  // Use the level number directly
+  return unit.lessons.find(l => l.level === levelId);
 }; 

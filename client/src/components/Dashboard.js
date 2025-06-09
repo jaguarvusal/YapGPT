@@ -1,6 +1,10 @@
-import { jsxs as _jsxs, jsx as _jsx, Fragment as _Fragment } from "react/jsx-runtime";
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@apollo/client';
+import { QUERY_ME } from '../utils/queries';
+import { UPDATE_PROGRESS } from '../utils/mutations';
+import Auth from '../utils/auth';
+import { jsxs as _jsxs, jsx as _jsx, Fragment as _Fragment } from "react/jsx-runtime";
 // Define unit character images using new URL() approach
 const unitImages = {
     chef: new URL('/assets/chef.png', import.meta.url).href,
@@ -48,6 +52,11 @@ const Dashboard = () => {
     const [showSkipTooltip, setShowSkipTooltip] = useState(null);
     const [showSkipConfirmation, setShowSkipConfirmation] = useState(null);
     const containerRef = useRef(null);
+    // Query for logged in user's data
+    const { data: userData } = useQuery(QUERY_ME);
+    
+    // Add mutation hook
+    const [updateProgress] = useMutation(UPDATE_PROGRESS);
     // Sync with localStorage on mount
     useEffect(() => {
         const savedLevel = localStorage.getItem('activeLevel');
@@ -230,11 +239,10 @@ const Dashboard = () => {
             setShowLessonTooltip(false);
             setShowLockedTooltip(null);
             setShowPracticeTooltip(null);
-            // Calculate the absolute level number
-            const absoluteLevel = ((unit - 1) * 5) + level;
+            
             // Navigate to the lesson page with string parameters
             const path = `/unit/${unit.toString()}/lesson/${level.toString()}`;
-            console.log('Navigating to:', path, 'Absolute level:', absoluteLevel); // Debug log
+            console.log('Navigating to:', path);
             navigate(path);
         }
         catch (error) {
@@ -242,15 +250,73 @@ const Dashboard = () => {
         }
     };
     // Add skip confirmation handler
-    const handleSkipConfirm = () => {
+    const handleSkipConfirm = async () => {
         if (showSkipConfirmation) {
             const { unit, level } = showSkipConfirmation;
-            // Update localStorage to mark this level as active
-            localStorage.setItem('activeLevel', level.toString());
-            setActiveLevel(level);
+            console.log('Starting skip process:', { unit, level });
+            
+            // If user is logged in, sync with database first
+            if (Auth.loggedIn()) {
+                console.log('User is logged in, preparing database update');
+                try {
+                    // Get current completed levels from localStorage
+                    const currentCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+                    console.log('Current completed levels:', currentCompletedLevels);
+                    
+                    // Only mark levels as completed up to the current level
+                    const newCompletedLevels = Array.from({ length: level - 1 }, (_, i) => i + 1);
+                    console.log('New completed levels:', newCompletedLevels);
+                    
+                    console.log('Calling updateProgress mutation with:', {
+                        activeLevel: level,
+                        completedLevels: newCompletedLevels
+                    });
+                    
+                    // Update progress in database using the mutation hook
+                    const { data, errors } = await updateProgress({
+                        variables: {
+                            activeLevel: level,
+                            completedLevels: newCompletedLevels
+                        }
+                    });
+                    
+                    if (errors) {
+                        console.error('GraphQL errors:', errors);
+                        throw new Error(errors[0].message);
+                    }
+                    
+                    if (data?.updateProgress) {
+                        console.log('Successfully saved progress to server:', {
+                            activeLevel: data.updateProgress.activeLevel,
+                            completedLevels: data.updateProgress.completedLevels
+                        });
+                        
+                        // Update localStorage with confirmed server values
+                        localStorage.setItem('activeLevel', data.updateProgress.activeLevel.toString());
+                        localStorage.setItem('completedLevels', JSON.stringify(data.updateProgress.completedLevels));
+                        setActiveLevel(data.updateProgress.activeLevel);
+                    } else {
+                        console.error('Server returned no data after updateProgress mutation');
+                        throw new Error('No data returned from server');
+                    }
+                } catch (error) {
+                    console.error('Error updating progress:', error);
+                    // If there's an error, still update local state but show error message
+                    alert('There was an error saving your progress. Please try again later.');
+                }
+            } else {
+                console.log('User not logged in, updating localStorage only');
+                // If not logged in, just update localStorage
+                const newCompletedLevels = Array.from({ length: level - 1 }, (_, i) => i + 1);
+                
+                localStorage.setItem('activeLevel', level.toString());
+                localStorage.setItem('completedLevels', JSON.stringify(newCompletedLevels));
+                setActiveLevel(level);
+            }
+            
             setShowSkipConfirmation(null);
-            // Navigate to the lesson
-            handleStartLesson(unit, level);
+            console.log('Navigating to:', `/unit/${unit}/lesson/${level}`);
+            navigate(`/unit/${unit}/lesson/${level}`);
         }
     };
     // Add skip cancel handler

@@ -1,4 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@apollo/client';
+import { QUERY_ME } from '../utils/queries';
+import { UPDATE_HEARTS_AND_STREAK } from '../utils/mutations';
+import Auth from '../utils/auth';
 
 interface StreakContextType {
   streak: number;
@@ -10,55 +14,55 @@ interface StreakContextType {
 const StreakContext = createContext<StreakContextType | undefined>(undefined);
 
 export const StreakProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [streak, setStreak] = useState(() => {
-    const savedStreak = localStorage.getItem('streak');
-    return savedStreak ? parseInt(savedStreak, 10) : 0;
+  const { data: userData } = useQuery(QUERY_ME, {
+    skip: !Auth.loggedIn(),
   });
 
-  const [lastLoginDate, setLastLoginDate] = useState<string | null>(() => {
-    return localStorage.getItem('lastLoginDate');
-  });
+  const [updateHeartsAndStreak] = useMutation(UPDATE_HEARTS_AND_STREAK);
 
+  const [streak, setStreak] = useState(1);
+  const [lastLoginDate, setLastLoginDate] = useState<string | null>(null);
   const [showStreakPopup, setShowStreakPopup] = useState(false);
 
+  // Initialize or update streak data
   useEffect(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of day
-    
-    if (!lastLoginDate) {
-      // First time user
+    if (!Auth.loggedIn()) {
       setStreak(1);
-      setLastLoginDate(today.toISOString());
-      setShowStreakPopup(true);
-      localStorage.setItem('streak', '1');
-      localStorage.setItem('lastLoginDate', today.toISOString());
-    } else {
-      const lastLogin = new Date(lastLoginDate);
-      lastLogin.setHours(0, 0, 0, 0); // Normalize to start of day
-      
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0); // Normalize to start of day
-      
-      // Check if last login was yesterday
-      if (lastLogin.getTime() === yesterday.getTime()) {
-        // User logged in yesterday, increment streak
-        const newStreak = streak + 1;
-        setStreak(newStreak);
-        setLastLoginDate(today.toISOString());
-        setShowStreakPopup(true);
-        localStorage.setItem('streak', newStreak.toString());
-        localStorage.setItem('lastLoginDate', today.toISOString());
-      } else if (lastLogin.getTime() !== today.getTime()) {
-        // User missed a day, reset streak
-        setStreak(1);
-        setLastLoginDate(today.toISOString());
-        setShowStreakPopup(true);
-        localStorage.setItem('streak', '1');
-        localStorage.setItem('lastLoginDate', today.toISOString());
-      }
+      return;
     }
-  }, []);
+
+    if (userData?.me) {
+      const today = new Date().toISOString().split('T')[0];
+      const lastShownPopup = localStorage.getItem('lastShownStreakPopup');
+      
+      // Update local state with server data
+      setStreak(userData.me.streak);
+      setLastLoginDate(userData.me.lastLoginDate);
+
+      // Show popup if we haven't shown it today
+      if (lastShownPopup !== today) {
+        setShowStreakPopup(true);
+        localStorage.setItem('lastShownStreakPopup', today);
+      }
+
+      // Sync with server to update streak if needed
+      updateHeartsAndStreak({
+        variables: {
+          hearts: userData.me.hearts,
+          streak: userData.me.streak,
+          lastLoginDate: today,
+          heartRegenerationTimer: userData.me.heartRegenerationTimer
+        }
+      }).then(({ data }) => {
+        if (data?.updateHeartsAndStreak) {
+          setStreak(data.updateHeartsAndStreak.streak);
+          setLastLoginDate(data.updateHeartsAndStreak.lastLoginDate);
+        }
+      }).catch(error => {
+        console.error('Error updating streak:', error);
+      });
+    }
+  }, [userData, updateHeartsAndStreak]);
 
   return (
     <StreakContext.Provider value={{ streak, lastLoginDate, showStreakPopup, setShowStreakPopup }}>

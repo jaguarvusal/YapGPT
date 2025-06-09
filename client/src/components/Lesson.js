@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { UPLOAD_AUDIO } from '../utils/mutations';
 import { findLesson } from '../data/lessons';
-import { useHearts } from '../contexts/HeartsContext';
+import { useHearts } from '../contexts/HeartsContext.jsx';
 const modeEmojis = {
     "Open Question": "🗣️",
     "Describe & Convince": "🎯",
@@ -414,6 +414,6 @@ const Lesson = () => {
                                                             ];
                                                             const colorClass = colors[index % colors.length];
                                                             return (_jsxs("div", { className: "flex items-center space-x-4", children: [_jsx("div", { className: `flex-shrink-0 w-8 h-8 rounded-full border-2 ${colorClass} flex items-center justify-center`, children: _jsx("span", { className: "font-medium", children: index + 1 }) }), _jsx("p", { className: "text-gray-300", children: suggestion })] }, index));
-                                                        }) })] }), _jsx("div", { className: "mt-6", children: allRequirementsMet ? (_jsxs("div", { className: "text-center", children: [_jsx("p", { className: "text-green-800 mb-4", children: "Great job! You've met all requirements!" }), _jsx("button", { onClick: handleNextLevel, className: "px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors", children: "Next Level" })] })) : (_jsxs("div", { className: "text-center", children: [_jsx("p", { className: "text-yellow-800 mb-4", children: "Some requirements weren't met. Try again!" }), _jsx("button", { onClick: handleRetry, className: "px-6 py-3 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-colors", children: "Retry" })] })) })] }))] }))] }) })] }) }));
+                                                        }) })] }), _jsx("div", { className: "mt-6", children: allRequirementsMet ? (_jsxs("div", { className: "text-center", children: [_jsx("p", { className: "text-green-800 mb-4", children: "Great job! You've met all requirements!" }), _jsx("button", { onClick: handleNextLevel, className: "px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors", children: "Next Level" })] })) : (_jsxs("div", { className: "text-center", children: [_jsx("p", { className: "text-yellow-800 mb-4", children: "Some requirements weren't met. Try again!" }), _jsx("button", { onClick: handleRetry, className: "px-6 py-3 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-colors", children: "Retry" })] })) })] }))] }))] }))] }) })] }) }));
 };
 export default Lesson;

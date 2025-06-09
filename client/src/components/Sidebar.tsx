@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
-import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS } from '../utils/mutations';
+import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS, UPDATE_HEARTS_AND_STREAK } from '../utils/mutations';
 import Auth from '../utils/auth';
 import passwordIcon from '/assets/password.png';
 import { FaHome, FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
@@ -12,6 +12,7 @@ const Sidebar: React.FC = () => {
   const [selectedButton, setSelectedButton] = useState<string | null>(() => {
     if (location.pathname === '/leaderboards') return 'leaderboard';
     if (location.pathname === '/flirt') return 'flirt';
+    if (location.pathname === '/me' || location.pathname.startsWith('/profile/') || location.pathname === '/search-friends' || location.pathname === '/avatar') return 'profile';
     return 'yap';
   });
   const [showAuthPopup, setShowAuthPopup] = useState(false);
@@ -34,6 +35,7 @@ const Sidebar: React.FC = () => {
   const [addYapper, { error: signupError }] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
   const [updateProgress] = useMutation(UPDATE_PROGRESS);
+  const [updateHeartsAndStreak] = useMutation(UPDATE_HEARTS_AND_STREAK);
 
   const handleNavigation = (path: string, button: string) => {
     navigate(path);
@@ -54,6 +56,8 @@ const Sidebar: React.FC = () => {
       setSelectedButton('leaderboard');
     } else if (location.pathname === '/flirt') {
       setSelectedButton('flirt');
+    } else if (location.pathname === '/me' || location.pathname.startsWith('/profile/') || location.pathname === '/search-friends' || location.pathname === '/avatar') {
+      setSelectedButton('profile');
     } else if (location.pathname === '/') {
       setSelectedButton('yap');
     }
@@ -97,6 +101,10 @@ const Sidebar: React.FC = () => {
       // Get local progress before signup
       const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
       const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+      const localHearts = Number(localStorage.getItem('hearts') || '5');
+      const localHeartRegenerationTimer = localStorage.getItem('heartRegenerationTimer');
+      const localStreak = Number(localStorage.getItem('streak') || '0');
+      const today = new Date().toISOString(); // Always use current date for new accounts
 
       // Only send required fields to the mutation
       const { identifier, ...signupData } = formState;
@@ -111,10 +119,21 @@ const Sidebar: React.FC = () => {
         
         // Immediately sync progress after signup
         try {
+          // Update progress (level and completed levels)
           const { data: progressData } = await updateProgress({
             variables: {
               activeLevel: localActiveLevel,
               completedLevels: localCompletedLevels
+            }
+          });
+          
+          // Update hearts and streak
+          const { data: heartsData } = await updateHeartsAndStreak({
+            variables: {
+              hearts: localHearts,
+              streak: localStreak,
+              lastLoginDate: today, // Use current date
+              heartRegenerationTimer: localHeartRegenerationTimer
             }
           });
           
@@ -123,20 +142,42 @@ const Sidebar: React.FC = () => {
             localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
             localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
           }
+
+          if (heartsData?.updateHeartsAndStreak) {
+            localStorage.setItem('hearts', heartsData.updateHeartsAndStreak.hearts.toString());
+            if (heartsData.updateHeartsAndStreak.heartRegenerationTimer) {
+              localStorage.setItem('heartRegenerationTimer', heartsData.updateHeartsAndStreak.heartRegenerationTimer);
+            }
+            localStorage.setItem('streak', heartsData.updateHeartsAndStreak.streak.toString());
+            localStorage.setItem('lastLoginDate', today); // Use current date
+          }
           
           console.log('Progress synced after signup');
         } catch (updateError) {
           console.error('Error syncing progress after signup:', updateError);
         }
 
+        // Clear all states
         setFormState({ name: '', email: '', password: '', identifier: '' });
         setPasswordError('');
         setShowPasswordTooltip(false);
         setShowPassword(false);
         setShowAuthPopup(false);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      // Handle duplicate key errors
+      if (e.message?.includes('duplicate key error')) {
+        if (e.message.includes('name_1')) {
+          setSignupError('This username is already taken. Please choose a different one.');
+        } else if (e.message.includes('email_1')) {
+          setSignupError('This email is already registered. Please use a different email or try logging in.');
+        } else {
+          setSignupError('This account already exists. Please try logging in instead.');
+        }
+      } else {
+        setSignupError('Something went wrong. Please try again.');
+      }
+      console.error('Signup error:', e);
     }
   };
 
@@ -242,7 +283,7 @@ const Sidebar: React.FC = () => {
                   selectedButton === 'leaderboard' 
                     ? 'text-[#e15831]' 
                     : 'text-white group-hover:text-[#17475c]'
-                }`}>LEADERBOARD</span>
+                }`}>LEAGUE</span>
               </div>
             </button>
           </div>
@@ -267,7 +308,7 @@ const Sidebar: React.FC = () => {
                   selectedButton === 'flirt' 
                     ? 'text-[#e15831]' 
                     : 'text-white group-hover:text-[#17475c]'
-                }`}>FLIRT</span>
+                }`}>RIZZ</span>
               </div>
             </button>
           </div>
@@ -286,7 +327,9 @@ const Sidebar: React.FC = () => {
                 selectedButton !== 'profile' ? 'group-hover:bg-[#f3e0b7]' : ''
               }`}>
                 <span className="w-16 h-16 relative">
-                  <div className="absolute -top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                  {!Auth.loggedIn() && (
+                    <div className="absolute -top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                  )}
                   <img src="/assets/profile.png" alt="Profile" className="w-full h-full object-contain" />
                 </span>
                 <span className={`text-sm font-medium ${

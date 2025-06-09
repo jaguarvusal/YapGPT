@@ -1,23 +1,37 @@
 const typeDefs = `
   type Yapper {
-    _id: ID
-    name: String
-    email: String
+    _id: ID!
+    name: String!
+    email: String!
     password: String
     skills: [String]!
-    activeLevel: Int
+    activeLevel: Int!
     completedLevels: [Int]
+    hearts: Int!
+    streak: Int!
+    lastLoginDate: String
+    lastLoginTime: String
+    heartRegenerationTimer: String
+    following: [Yapper]
+    followers: [Yapper]
+    avatar: String
+    createdAt: String
+    updatedAt: String
   }
 
   type Auth {
     token: ID!
-    yapper: Yapper
+    yapper: Yapper!
   }
   
   input YapperInput {
     name: String!
     email: String!
     password: String!
+    hearts: Int
+    streak: Int
+    lastLoginDate: String
+    heartRegenerationTimer: String
   }
 
   input UploadAudioInput {
@@ -96,9 +110,11 @@ const typeDefs = `
   }
 
   type Mutation {
-    addYapper(input: YapperInput!): Auth
-    login(identifier: String!, password: String!): Auth
-    updateProgress(activeLevel: Int!, completedLevels: [Int!]!): Yapper
+    addYapper(input: YapperInput!): Auth!
+    login(identifier: String!, password: String!): Auth!
+    updateProgress(activeLevel: Int!, completedLevels: [Int]!): Yapper
+    updateHeartsAndStreak(hearts: Int!, streak: Int!, lastLoginDate: String, heartRegenerationTimer: String): Yapper
+    updateAvatar(avatar: String!): Yapper
     addSkill(yapperId: ID!, skill: String!): Yapper
     removeYapper: Yapper
     removeSkill(skill: String!): Yapper
@@ -111,6 +127,8 @@ const typeDefs = `
     streamChatResponse(message: String!, characterId: String!): StreamedChatResponse!
     streamVoiceResponse(voiceId: String!, text: String!): StreamedVoiceResponse!
     analyzeConversation(conversation: [MessageInput!]!): AnalysisResponse!
+    followUser(userId: ID!): Yapper
+    unfollowUser(userId: ID!): Yapper
   }
 
   type Subscription {
