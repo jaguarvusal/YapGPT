@@ -10,6 +10,14 @@ interface IYapper extends Document {
   skills: string[];
   activeLevel: number;
   completedLevels: number[];
+  hearts: number;
+  streak: number;
+  lastLoginDate: string;
+  lastLoginTime: string;
+  heartRegenerationTimer: string | null;
+  following: string[];
+  followers: string[];
+  avatar: string;
   isCorrectPassword(password: string): Promise<boolean>;
 }
 
@@ -46,6 +54,60 @@ const yapperSchema = new Schema<IYapper>(
     completedLevels: [{
       type: Number,
     }],
+    hearts: {
+      type: Number,
+      default: 5,
+    },
+    streak: {
+      type: Number,
+      default: 1,
+    },
+    lastLoginDate: {
+      type: String,
+      default: function() {
+        const now = new Date();
+        const utcDate = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          now.getUTCHours(),
+          now.getUTCMinutes(),
+          now.getUTCSeconds()
+        ));
+        return utcDate.toISOString();
+      },
+    },
+    lastLoginTime: {
+      type: String,
+      default: function() {
+        const now = new Date();
+        const utcDate = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          now.getUTCHours(),
+          now.getUTCMinutes(),
+          now.getUTCSeconds()
+        ));
+        return utcDate.toISOString();
+      },
+    },
+    heartRegenerationTimer: {
+      type: String,
+      default: null,
+    },
+    following: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Yapper'
+    }],
+    followers: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Yapper'
+    }],
+    avatar: {
+      type: String,
+      default: null
+    }
   },
   {
     timestamps: true,

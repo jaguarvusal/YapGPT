@@ -9,6 +9,11 @@ export const ADD_YAPPER = gql`
         name
         activeLevel
         completedLevels
+        hearts
+        streak
+        lastLoginDate
+        lastLoginTime
+        heartRegenerationTimer
       }
     }
   }
@@ -23,6 +28,10 @@ export const LOGIN_USER = gql`
         name
         activeLevel
         completedLevels
+        hearts
+        streak
+        lastLoginDate
+        heartRegenerationTimer
       }
     }
   }
@@ -64,6 +73,81 @@ export const UPDATE_PROGRESS = gql`
       name
       activeLevel
       completedLevels
+    }
+  }
+`;
+
+export const UPDATE_HEARTS_AND_STREAK = gql`
+  mutation updateHeartsAndStreak($hearts: Int!, $streak: Int!, $lastLoginDate: String, $heartRegenerationTimer: String) {
+    updateHeartsAndStreak(hearts: $hearts, streak: $streak, lastLoginDate: $lastLoginDate, heartRegenerationTimer: $heartRegenerationTimer) {
+      _id
+      hearts
+      streak
+      lastLoginDate
+      lastLoginTime
+      heartRegenerationTimer
+    }
+  }
+`;
+
+export const FOLLOW_USER = gql`
+  mutation followUser($userId: ID!) {
+    followUser(userId: $userId) {
+      _id
+      following {
+        _id
+        name
+      }
+      followers {
+        _id
+        name
+      }
+    }
+  }
+`;
+
+export const UNFOLLOW_USER = gql`
+  mutation unfollowUser($userId: ID!) {
+    unfollowUser(userId: $userId) {
+      _id
+      following {
+        _id
+        name
+      }
+      followers {
+        _id
+        name
+      }
+    }
+  }
+`;
+
+export const UPDATE_AVATAR = gql`
+  mutation updateAvatar($avatar: String!) {
+    updateAvatar(avatar: $avatar) {
+      _id
+      name
+      email
+      skills
+      activeLevel
+      completedLevels
+      hearts
+      streak
+      lastLoginDate
+      lastLoginTime
+      heartRegenerationTimer
+      avatar
+      createdAt
+      following {
+        _id
+        name
+        avatar
+      }
+      followers {
+        _id
+        name
+        avatar
+      }
     }
   }
 `;

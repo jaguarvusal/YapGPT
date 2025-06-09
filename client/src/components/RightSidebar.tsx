@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useMutation } from '@apollo/client';
-import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS } from '../utils/mutations.js';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation, useQuery } from '@apollo/client';
+import { ADD_YAPPER, LOGIN_USER, UPDATE_PROGRESS, UPDATE_HEARTS_AND_STREAK } from '../utils/mutations.js';
+import { QUERY_ME } from '../utils/queries';
 import Auth from '../utils/auth';
 import Hearts from './Hearts.tsx';
 import { useStreak } from '../contexts/StreakContext';
 import StreakIcon from './StreakIcon.tsx';
 import passwordIcon from '/assets/password.png';
+import { getRandomColor } from '../utils/colors';
+import DefaultAvatar from './DefaultAvatar';
 
 const RightSidebar: React.FC = () => {
+  const navigate = useNavigate();
   const { streak } = useStreak();
+  const { data, refetch } = useQuery(QUERY_ME, {
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'cache-first'
+  });
+  const yapper = data?.me;
   const [showSignup, setShowSignup] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -31,6 +40,12 @@ const RightSidebar: React.FC = () => {
   const [addYapper] = useMutation(ADD_YAPPER);
   const [login, { error: loginError }] = useMutation(LOGIN_USER);
   const [updateProgress] = useMutation(UPDATE_PROGRESS);
+  const [updateHeartsAndStreak] = useMutation(UPDATE_HEARTS_AND_STREAK);
+
+  // Refetch user data when component mounts
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const scrollToForm = () => {
     const formElement = document.getElementById('auth-form');
@@ -94,6 +109,10 @@ const RightSidebar: React.FC = () => {
       // Get local progress before signup
       const localActiveLevel = Number(localStorage.getItem('activeLevel') || '1');
       const localCompletedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+      const localHearts = Number(localStorage.getItem('hearts') || '5');
+      const localHeartRegenerationTimer = localStorage.getItem('heartRegenerationTimer');
+      const localStreak = Number(localStorage.getItem('streak') || '0');
+      const today = new Date().toISOString(); // Always use current date for new accounts
 
       // Only send required fields to the mutation
       const { identifier, ...signupData } = formState;
@@ -108,6 +127,7 @@ const RightSidebar: React.FC = () => {
         
         // Immediately sync progress after signup
         try {
+          // Update progress (level and completed levels)
           const { data: progressData } = await updateProgress({
             variables: {
               activeLevel: localActiveLevel,
@@ -115,10 +135,29 @@ const RightSidebar: React.FC = () => {
             }
           });
           
+          // Update hearts and streak
+          const { data: heartsData } = await updateHeartsAndStreak({
+            variables: {
+              hearts: localHearts,
+              streak: localStreak,
+              lastLoginDate: today, // Use current date
+              heartRegenerationTimer: localHeartRegenerationTimer
+            }
+          });
+          
           // Update localStorage with the confirmed progress from the server
           if (progressData?.updateProgress) {
             localStorage.setItem('activeLevel', progressData.updateProgress.activeLevel.toString());
             localStorage.setItem('completedLevels', JSON.stringify(progressData.updateProgress.completedLevels));
+          }
+
+          if (heartsData?.updateHeartsAndStreak) {
+            localStorage.setItem('hearts', heartsData.updateHeartsAndStreak.hearts.toString());
+            if (heartsData.updateHeartsAndStreak.heartRegenerationTimer) {
+              localStorage.setItem('heartRegenerationTimer', heartsData.updateHeartsAndStreak.heartRegenerationTimer);
+            }
+            localStorage.setItem('streak', heartsData.updateHeartsAndStreak.streak.toString());
+            localStorage.setItem('lastLoginDate', today); // Use current date
           }
           
           console.log('Progress synced after signup');
@@ -195,11 +234,19 @@ const RightSidebar: React.FC = () => {
     return '';
   };
 
+  const handleProfileClick = () => {
+    if (!Auth.loggedIn()) {
+      navigate('/auth');
+    } else {
+      navigate('/me');
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-2">
       <div className="flex flex-col space-y-4">
-        <div className="bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl p-4 shadow-lg border-4 border-[#17475c]">
-          <h2 className="text-lg font-semibold text-black mb-2">Lives</h2>
+        <div className="bg-[#17475c] rounded-xl p-4 shadow-lg">
+          <h2 className="text-lg font-semibold text-white mb-2">Lives</h2>
           <div className="flex justify-center">
             <Hearts />
           </div>
@@ -228,22 +275,32 @@ const RightSidebar: React.FC = () => {
       <div className="mt-0 bg-[#f3e0b7]/80 backdrop-blur-md rounded-xl shadow-md p-4 max-w-[350px] border-4 border-dashed border-[#17475c]">
         {Auth.loggedIn() ? (
           <>
-            <h2 className="text-lg font-semibold mb-2 text-white">
-              {Auth.getProfile().data.username}
-            </h2>
+            <div className="flex items-center space-x-3 mb-2">
+              <div 
+                className="w-12 h-12 rounded-full overflow-hidden border-4 border-black flex-shrink-0"
+                style={{ backgroundColor: getRandomColor(yapper?.name || '') }}
+              >
+                {yapper?.avatar ? (
+                  <img 
+                    src={`/assets/${yapper.avatar}`}
+                    alt={`${yapper?.name}'s avatar`}
+                    className="w-full h-full object-cover object-bottom translate-y-[15%]"
+                  />
+                ) : (
+                  <DefaultAvatar username={yapper?.name || ''} className="w-full h-full text-xl" />
+                )}
+              </div>
+              <h2 className="text-lg font-semibold text-black">
+                {yapper?.name}
+              </h2>
+            </div>
             <p className="text-gray-400 text-sm mb-6">{formatJoinDate()}</p>
-            <div className="space-y-3">
-              <Link 
-                to="/me"
+            <div>
+              <button 
+                onClick={handleProfileClick}
                 className="block w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-all duration-150 text-center border-b-4 border-purple-600 active:translate-y-1 active:border-b-0"
               >
                 View Profile
-              </Link>
-              <button 
-                onClick={() => Auth.logout()}
-                className="w-full bg-white text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-100 transition-all duration-150 border-b-4 border-gray-200 active:translate-y-1 active:border-b-0"
-              >
-                Log Out
               </button>
             </div>
           </>

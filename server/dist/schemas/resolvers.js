@@ -24,17 +24,109 @@ const createTypedPubSub = () => {
     };
 };
 const pubsub = createTypedPubSub();
+// Add this helper function near the top of the file, after the interfaces
+const toGraphQLYapper = (doc) => {
+    const obj = doc.toObject();
+    return {
+        ...obj,
+        __typename: 'Yapper',
+        toObject: () => obj
+    };
+};
 const resolvers = {
     Query: {
         yappers: async () => {
-            return await Yapper.find();
+            const yappers = await Yapper.find()
+                .populate({
+                path: 'following',
+                select: '_id name avatar activeLevel',
+                model: 'Yapper'
+            })
+                .populate({
+                path: 'followers',
+                select: '_id name avatar activeLevel',
+                model: 'Yapper'
+            });
+            return yappers.map(yapper => {
+                const obj = yapper.toObject();
+                return {
+                    ...obj,
+                    following: (obj.following || []).map((f) => ({
+                        _id: f._id,
+                        name: f.name,
+                        avatar: f.avatar,
+                        activeLevel: f.activeLevel,
+                        __typename: 'Yapper'
+                    })),
+                    followers: (obj.followers || []).map((f) => ({
+                        _id: f._id,
+                        name: f.name,
+                        avatar: f.avatar,
+                        activeLevel: f.activeLevel,
+                        __typename: 'Yapper'
+                    })),
+                    avatar: obj.avatar,
+                    __typename: 'Yapper',
+                    toObject: () => obj
+                };
+            });
         },
         yapper: async (_parent, { yapperId }) => {
             return await Yapper.findOne({ _id: yapperId });
         },
         me: async (_parent, _args, context) => {
             if (context.user) {
-                return await Yapper.findOne({ _id: context.user._id });
+                try {
+                    console.log('ME query context user:', context.user);
+                    const user = await Yapper.findOne({ _id: context.user._id })
+                        .select('_id name email skills activeLevel completedLevels hearts streak lastLoginDate lastLoginTime heartRegenerationTimer avatar following followers createdAt')
+                        .populate({
+                        path: 'following',
+                        select: '_id name avatar activeLevel',
+                        model: 'Yapper'
+                    })
+                        .populate({
+                        path: 'followers',
+                        select: '_id name avatar activeLevel',
+                        model: 'Yapper'
+                    });
+                    if (!user) {
+                        console.error('User not found in database');
+                        throw new Error('User not found');
+                    }
+                    // Convert to plain object and ensure all fields are present
+                    const userObj = user.toObject();
+                    console.log('User object before transformation:', userObj);
+                    // Ensure following and followers arrays exist and have avatar fields
+                    const following = (userObj.following || []).map((f) => ({
+                        _id: f._id,
+                        name: f.name,
+                        avatar: f.avatar,
+                        activeLevel: f.activeLevel || 1,
+                        __typename: 'Yapper'
+                    }));
+                    const followers = (userObj.followers || []).map((f) => ({
+                        _id: f._id,
+                        name: f.name,
+                        avatar: f.avatar,
+                        activeLevel: f.activeLevel || 1,
+                        __typename: 'Yapper'
+                    }));
+                    // Create the response object with all required fields
+                    const response = {
+                        ...userObj,
+                        following,
+                        followers,
+                        avatar: userObj.avatar,
+                        __typename: 'Yapper'
+                    };
+                    console.log('ME query result:', JSON.stringify(response, null, 2));
+                    return response;
+                }
+                catch (error) {
+                    console.error('Error in me query:', error);
+                    throw error;
+                }
             }
             throw AuthenticationError;
         },
@@ -42,9 +134,34 @@ const resolvers = {
     },
     Mutation: {
         addYapper: async (_parent, { input }) => {
-            const yapper = await Yapper.create({ ...input });
-            const token = signToken(yapper.name, yapper.email, yapper._id);
-            return { token, yapper };
+            // Create a date in UTC
+            const now = new Date();
+            const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds()));
+            // Create the new user with initial values
+            const yapper = await Yapper.create({
+                ...input,
+                hearts: input.hearts ?? 5, // Use provided hearts or default to 5
+                streak: 1, // Always start with streak 1 for new accounts
+                heartRegenerationTimer: input.heartRegenerationTimer ?? null, // Use provided timer or default to null
+                lastLoginDate: utcDate.toISOString(), // Set to current UTC date for new accounts
+                lastLoginTime: utcDate.toISOString() // Set to current UTC time for new accounts
+            });
+            // Ensure we return the complete user data
+            const completeYapper = await Yapper.findOne({ _id: yapper._id })
+                .select('+activeLevel +completedLevels +hearts +streak +lastLoginDate +heartRegenerationTimer');
+            if (!completeYapper) {
+                throw new Error('Failed to retrieve complete user data');
+            }
+            // Log the created user data for debugging
+            console.log('Created new user:', {
+                userId: completeYapper._id,
+                name: completeYapper.name,
+                streak: completeYapper.streak,
+                lastLoginDate: completeYapper.lastLoginDate,
+                lastLoginTime: completeYapper.lastLoginTime
+            });
+            const token = signToken(completeYapper.name, completeYapper.email, completeYapper._id);
+            return { token, yapper: toGraphQLYapper(completeYapper) };
         },
         login: async (_parent, { identifier, password }) => {
             try {
@@ -66,8 +183,9 @@ const resolvers = {
                 if (!correctPw) {
                     throw new AuthenticationError('Invalid credentials');
                 }
-                // Ensure we have the complete user data with progress fields
-                const completeYapper = await Yapper.findOne({ _id: yapper._id }).select('+activeLevel +completedLevels');
+                // Ensure we have the complete user data with all fields
+                const completeYapper = await Yapper.findOne({ _id: yapper._id })
+                    .select('+activeLevel +completedLevels +hearts +streak +lastLoginDate +heartRegenerationTimer');
                 if (!completeYapper) {
                     throw new Error('Failed to retrieve complete user data');
                 }
@@ -75,10 +193,14 @@ const resolvers = {
                     id: completeYapper._id,
                     name: completeYapper.name,
                     activeLevel: completeYapper.activeLevel,
-                    completedLevels: completeYapper.completedLevels
+                    completedLevels: completeYapper.completedLevels,
+                    hearts: completeYapper.hearts,
+                    streak: completeYapper.streak,
+                    lastLoginDate: completeYapper.lastLoginDate,
+                    heartRegenerationTimer: completeYapper.heartRegenerationTimer
                 });
                 const token = signToken(completeYapper.name, completeYapper.email, completeYapper._id);
-                return { token, yapper: completeYapper };
+                return { token, yapper: toGraphQLYapper(completeYapper) };
             }
             catch (error) {
                 console.error('Login error:', error);
@@ -86,6 +208,38 @@ const resolvers = {
                     throw error;
                 }
                 throw new AuthenticationError('An error occurred during login');
+            }
+        },
+        updateAvatar: async (_parent, { avatar }, context) => {
+            if (!context.user) {
+                console.error('Authentication error: No user in context');
+                throw new AuthenticationError('You must be logged in to update your avatar');
+            }
+            try {
+                console.log('Updating avatar for user:', context.user._id, 'to:', avatar);
+                const updatedYapper = await Yapper.findOneAndUpdate({ _id: context.user._id }, { $set: { avatar } }, {
+                    new: true,
+                    runValidators: true,
+                    select: '_id name email skills activeLevel completedLevels hearts streak lastLoginDate lastLoginTime heartRegenerationTimer avatar following followers createdAt'
+                }).populate({
+                    path: 'following',
+                    select: '_id name avatar',
+                    model: 'Yapper'
+                }).populate({
+                    path: 'followers',
+                    select: '_id name avatar',
+                    model: 'Yapper'
+                });
+                if (!updatedYapper) {
+                    console.error('Failed to find and update user:', context.user._id);
+                    throw new Error('Failed to update avatar');
+                }
+                console.log('Successfully updated avatar for user:', context.user._id);
+                return updatedYapper ? toGraphQLYapper(updatedYapper) : null;
+            }
+            catch (error) {
+                console.error('Error in updateAvatar:', error);
+                throw error;
             }
         },
         addSkill: async (_parent, { yapperId, skill }, context) => {
@@ -524,19 +678,34 @@ IMPORTANT:
                     });
                     throw new Error('Invalid input types');
                 }
+                // Get current user data
+                const currentUser = await Yapper.findById(context.user._id);
+                if (!currentUser) {
+                    throw new Error('User not found');
+                }
+                console.log('Current user data:', {
+                    currentLevel: currentUser.activeLevel,
+                    newLevel: activeLevel,
+                    currentCompletedLevels: currentUser.completedLevels,
+                    newCompletedLevels: completedLevels
+                });
+                // Create array of all levels up to the new active level
+                const levelsUpToActive = Array.from({ length: activeLevel - 1 }, (_, i) => i + 1);
+                // Combine current completed levels with levels up to active level
+                const allCompletedLevels = [...new Set([
+                        ...(currentUser.completedLevels || []),
+                        ...completedLevels,
+                        ...levelsUpToActive
+                    ])].sort((a, b) => a - b);
                 const updateData = {
                     activeLevel,
-                    completedLevels: [...new Set(completedLevels)]
+                    completedLevels: allCompletedLevels
                 };
-                console.log('Update data:', updateData);
-                // Log the current user data before update
-                const currentUser = await Yapper.findById(context.user._id);
-                console.log('Current user data before update:', {
-                    _id: currentUser?._id,
-                    activeLevel: currentUser?.activeLevel,
-                    completedLevels: currentUser?.completedLevels
-                });
-                const updatedYapper = await Yapper.findOneAndUpdate({ _id: context.user._id }, { $set: updateData }, { new: true, runValidators: true });
+                console.log('Updating with data:', updateData);
+                console.log('Update query:', { _id: context.user._id });
+                console.log('Update operation:', { $set: updateData });
+                // Try direct update first
+                const updatedYapper = await Yapper.findByIdAndUpdate(context.user._id, { $set: updateData }, { new: true, runValidators: true });
                 if (!updatedYapper) {
                     console.error('Failed to update progress - user not found');
                     throw new Error('Failed to update progress');
@@ -546,14 +715,153 @@ IMPORTANT:
                     activeLevel: updatedYapper.activeLevel,
                     completedLevels: updatedYapper.completedLevels
                 });
-                return updatedYapper;
+                // Verify the update
+                const verifyUser = await Yapper.findById(context.user._id);
+                console.log('Verification after update:', {
+                    _id: verifyUser?._id,
+                    activeLevel: verifyUser?.activeLevel,
+                    completedLevels: verifyUser?.completedLevels
+                });
+                return updatedYapper ? toGraphQLYapper(updatedYapper) : null;
             }
             catch (error) {
                 console.error('Error in updateProgress:', error);
                 if (error instanceof AuthenticationError) {
                     throw error;
                 }
-                throw new Error(`Failed to update progress: ${error.message || 'Unknown error'}`);
+                throw new Error(`Failed to update progress: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        },
+        updateHeartsAndStreak: async (_parent, { hearts, streak: _streak, lastLoginDate: _lastLoginDate, heartRegenerationTimer }, context) => {
+            if (!context.user) {
+                throw new AuthenticationError('You must be logged in to update hearts and streak');
+            }
+            try {
+                const currentUser = await Yapper.findById(context.user._id);
+                if (!currentUser) {
+                    throw new Error('User not found');
+                }
+                const now = new Date();
+                const currentTime = now.toISOString();
+                const today = now.toISOString().split('T')[0];
+                const lastLogin = currentUser.lastLoginDate?.split('T')[0];
+                // Calculate new streak based on last login date
+                let newStreak = currentUser.streak;
+                if (lastLogin && lastLogin !== today) {
+                    // If last login was yesterday, increment streak
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yesterdayStr = yesterday.toISOString().split('T')[0];
+                    if (lastLogin === yesterdayStr) {
+                        newStreak = currentUser.streak + 1;
+                    }
+                    else {
+                        // If last login was more than a day ago, reset streak
+                        newStreak = 1;
+                    }
+                }
+                const updateData = {
+                    hearts,
+                    streak: newStreak,
+                    lastLoginTime: currentTime,
+                    lastLoginDate: now.toISOString(),
+                    heartRegenerationTimer: null
+                };
+                if (hearts === 0 && heartRegenerationTimer) {
+                    updateData.heartRegenerationTimer = heartRegenerationTimer;
+                }
+                const updatedYapper = await Yapper.findOneAndUpdate({ _id: context.user._id }, { $set: updateData }, { new: true, runValidators: true });
+                return updatedYapper ? toGraphQLYapper(updatedYapper) : null;
+            }
+            catch (error) {
+                console.error('Error in updateHeartsAndStreak:', error);
+                throw error;
+            }
+        },
+        followUser: async (_parent, { userId }, context) => {
+            console.log('followUser called with:', { userId, contextUser: context.user });
+            if (!context.user) {
+                console.log('No user in context');
+                throw new AuthenticationError('You must be logged in to follow users');
+            }
+            try {
+                const currentUserId = context.user._id;
+                console.log('Current user ID:', currentUserId);
+                // Don't allow following yourself
+                if (currentUserId === userId) {
+                    console.log('Attempted to follow self');
+                    throw new Error('You cannot follow yourself');
+                }
+                // Get both users
+                const currentUser = await Yapper.findById(currentUserId);
+                const userToFollow = await Yapper.findById(userId);
+                console.log('Found users:', {
+                    currentUser: currentUser ? 'Found' : 'Not found',
+                    userToFollow: userToFollow ? 'Found' : 'Not found'
+                });
+                if (!currentUser || !userToFollow) {
+                    console.log('User not found');
+                    throw new Error('User not found');
+                }
+                // Check if already following
+                const isFollowing = currentUser.following.some(id => id.toString() === userId);
+                console.log('Is already following:', isFollowing);
+                if (isFollowing) {
+                    throw new Error('You are already following this user');
+                }
+                // Add to following and followers
+                currentUser.following.push(userId);
+                userToFollow.followers.push(currentUserId);
+                console.log('Updating following/followers:', {
+                    currentUserFollowing: currentUser.following,
+                    userToFollowFollowers: userToFollow.followers
+                });
+                // Save both users
+                await currentUser.save();
+                await userToFollow.save();
+                // Return the updated current user with populated following/followers
+                const updatedUser = await Yapper.findById(currentUserId)
+                    .populate('following', '_id name')
+                    .populate('followers', '_id name');
+                console.log('Updated user:', updatedUser);
+                return updatedUser ? toGraphQLYapper(updatedUser) : null;
+            }
+            catch (error) {
+                console.error('Error in followUser:', error);
+                throw error;
+            }
+        },
+        unfollowUser: async (_parent, { userId }, context) => {
+            if (!context.user) {
+                throw new AuthenticationError('You must be logged in to unfollow users');
+            }
+            try {
+                const currentUserId = context.user._id;
+                // Get both users
+                const currentUser = await Yapper.findById(currentUserId);
+                const userToUnfollow = await Yapper.findById(userId);
+                if (!currentUser || !userToUnfollow) {
+                    throw new Error('User not found');
+                }
+                // Check if actually following
+                if (!currentUser.following.some(id => id.toString() === userId)) {
+                    throw new Error('You are not following this user');
+                }
+                // Remove from following and followers
+                currentUser.following = currentUser.following.filter(id => id.toString() !== userId);
+                userToUnfollow.followers = userToUnfollow.followers.filter(id => id.toString() !== currentUserId);
+                // Save both users
+                await currentUser.save();
+                await userToUnfollow.save();
+                // Return the updated current user with populated following/followers
+                return await Yapper.findById(currentUserId)
+                    .populate('following', '_id name')
+                    .populate('followers', '_id name')
+                    .then(user => user ? toGraphQLYapper(user) : null);
+            }
+            catch (error) {
+                console.error('Error in unfollowUser:', error);
+                throw error;
             }
         },
     },

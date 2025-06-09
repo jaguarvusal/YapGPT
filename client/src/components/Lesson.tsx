@@ -4,7 +4,7 @@ import { useMutation } from '@apollo/client';
 import { UPLOAD_AUDIO, UPDATE_PROGRESS } from '../utils/mutations';
 import { findLesson } from '../data/lessons';
 import type { Lesson } from '../data/lessons';
-import { useHearts } from '../contexts/HeartsContext';
+import { useHearts } from '../contexts/HeartsContext.jsx';
 import Auth from '../utils/auth';
 
 interface LessonParams {
@@ -307,65 +307,6 @@ const Lesson: React.FC = () => {
     }
   }, [isRecording]);
 
-  // Add effect to handle level advancement when requirements are met
-  useEffect(() => {
-    if (allRequirementsMet) {
-      const currentLevel = Number(levelId);
-      const activeLevel = Number(localStorage.getItem('activeLevel') || '1');
-      
-      console.log('Level requirements met:', {
-        currentLevel,
-        activeLevel,
-        shouldUpdate: currentLevel >= activeLevel
-      });
-      
-      // Only update active level if this is the current active level or a future level
-      if (currentLevel >= activeLevel) {
-        const nextLevel = currentLevel + 1;
-        
-        // Update localStorage with the next level
-        localStorage.setItem('activeLevel', nextLevel.toString());
-        console.log('Updated localStorage activeLevel to:', nextLevel);
-        
-        // Update completed levels
-        const completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
-        if (!completedLevels.includes(currentLevel)) {
-          completedLevels.push(currentLevel);
-          localStorage.setItem('completedLevels', JSON.stringify(completedLevels));
-          console.log('Updated completedLevels:', completedLevels);
-        }
-        
-        // Sync progress with server if user is logged in
-        if (Auth.loggedIn()) {
-          try {
-            updateProgress({
-              variables: {
-                activeLevel: nextLevel,
-                completedLevels: completedLevels
-              }
-            }).then(({ data }) => {
-              if (data?.updateProgress) {
-                console.log('Progress synced with server:', data.updateProgress);
-              }
-            }).catch(error => {
-              console.error('Error syncing progress with server:', error);
-            });
-          } catch (error) {
-            console.error('Error calling updateProgress mutation:', error);
-          }
-        }
-        
-        // If we're in the browser, dispatch a custom event to notify Dashboard
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('levelCompleted', {
-            detail: { nextLevel }
-          }));
-          console.log('Dispatched levelCompleted event with nextLevel:', nextLevel);
-        }
-      }
-    }
-  }, [allRequirementsMet, levelId, updateProgress]);
-
   // Update the feedback handling to set allRequirementsMet
   useEffect(() => {
     if (feedback) {
@@ -373,12 +314,55 @@ const Lesson: React.FC = () => {
         Object.values(requirementStatuses).every(status => status.met);
       setAllRequirementsMet(requirementsMet);
       
-      // Call handleSubmit when requirements are not met
+      // Call loseHeart immediately if requirements are not met
       if (!requirementsMet) {
-        handleSubmit();
+        console.log('Requirements not met, losing heart...');
+        loseHeart();
       }
     }
   }, [feedback, requirementStatuses]);
+
+  // Add effect to handle level advancement when requirements are met
+  useEffect(() => {
+    if (allRequirementsMet) {
+      const currentLevel = Number(levelId);
+      const activeLevel = Number(localStorage.getItem('activeLevel') || '1');
+      // Only update active level if this is the current active level or a future level
+      if (currentLevel >= activeLevel) {
+        const nextLevel = currentLevel + 1;
+        const completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+        const updatedCompletedLevels = [...new Set([...completedLevels, currentLevel])].sort((a, b) => a - b);
+        
+        // Update localStorage
+        localStorage.setItem('activeLevel', nextLevel.toString());
+        localStorage.setItem('completedLevels', JSON.stringify(updatedCompletedLevels));
+        
+        // If user is logged in, sync with database
+        if (Auth.loggedIn()) {
+          updateProgress({
+            variables: {
+              activeLevel: nextLevel,
+              completedLevels: updatedCompletedLevels
+            }
+          }).then(({ data }) => {
+            if (data?.updateProgress) {
+              localStorage.setItem('activeLevel', data.updateProgress.activeLevel.toString());
+              localStorage.setItem('completedLevels', JSON.stringify(data.updateProgress.completedLevels));
+            }
+          }).catch(error => {
+            console.error('Error syncing progress with server:', error);
+          });
+        }
+        
+        // Dispatch level completed event
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('levelCompleted', {
+            detail: { nextLevel }
+          }));
+        }
+      }
+    }
+  }, [allRequirementsMet, levelId]);
 
   const handleNextLevel = () => {
     const nextLevel = Number(levelId) + 1;
@@ -402,13 +386,41 @@ const Lesson: React.FC = () => {
       
       // Only update active level if this is the current active level or a future level
       if (Number(levelId) >= activeLevel) {
-        localStorage.setItem('activeLevel', nextLevel.toString());
+        const completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
         
-        // Dispatch level completed event
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('levelCompleted', {
-            detail: { nextLevel }
-          }));
+        // Sync progress with server if user is logged in
+        if (Auth.loggedIn()) {
+          updateProgress({
+            variables: {
+              activeLevel: nextLevel,
+              completedLevels: completedLevels
+            }
+          }).then(({ data }) => {
+            if (data?.updateProgress) {
+              localStorage.setItem('activeLevel', data.updateProgress.activeLevel.toString());
+              localStorage.setItem('completedLevels', JSON.stringify(data.updateProgress.completedLevels));
+              
+              // Dispatch level completed event with server-confirmed level
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('levelCompleted', {
+                  detail: { nextLevel: data.updateProgress.activeLevel }
+                }));
+              }
+            }
+          }).catch(error => {
+            console.error('Error syncing progress with server:', error);
+            // Don't update localStorage if server sync fails
+            return;
+          });
+        } else {
+          localStorage.setItem('activeLevel', nextLevel.toString());
+          
+          // Dispatch level completed event
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('levelCompleted', {
+              detail: { nextLevel }
+            }));
+          }
         }
       }
       
@@ -420,13 +432,41 @@ const Lesson: React.FC = () => {
       
       // Only update active level if this is the current active level or a future level
       if (Number(levelId) >= activeLevel) {
-        localStorage.setItem('activeLevel', '1');
+        const completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
         
-        // Dispatch level completed event for unit transition
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('levelCompleted', {
-            detail: { nextLevel: 1 }
-          }));
+        // Sync progress with server if user is logged in
+        if (Auth.loggedIn()) {
+          updateProgress({
+            variables: {
+              activeLevel: 1,
+              completedLevels: completedLevels
+            }
+          }).then(({ data }) => {
+            if (data?.updateProgress) {
+              localStorage.setItem('activeLevel', data.updateProgress.activeLevel.toString());
+              localStorage.setItem('completedLevels', JSON.stringify(data.updateProgress.completedLevels));
+              
+              // Dispatch level completed event with server-confirmed level
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('levelCompleted', {
+                  detail: { nextLevel: data.updateProgress.activeLevel }
+                }));
+              }
+            }
+          }).catch(error => {
+            console.error('Error syncing progress with server:', error);
+            // Don't update localStorage if server sync fails
+            return;
+          });
+        } else {
+          localStorage.setItem('activeLevel', '1');
+          
+          // Dispatch level completed event for unit transition
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('levelCompleted', {
+              detail: { nextLevel: 1 }
+            }));
+          }
         }
       }
       
@@ -451,13 +491,84 @@ const Lesson: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    // Check if any requirements are not met
-    const hasFailedRequirements = Object.values(requirementStatuses).some(status => !status.met);
-    if (hasFailedRequirements) {
-      loseHeart();
-    }
-
+    // Remove heart loss from here since it's now handled in the useEffect
     // ... rest of the submit logic ...
+  };
+
+  const handleSkip = async () => {
+    try {
+      const nextLevel = Number(levelId) + 1;
+      console.log('Skipping to level:', nextLevel);
+      
+      // Update local storage first
+      const updatedCompletedLevels = [...completedLevels, Number(levelId)];
+      localStorage.setItem('completedLevels', JSON.stringify(updatedCompletedLevels));
+      localStorage.setItem('activeLevel', nextLevel.toString());
+      
+      // Always update progress in database
+      if (Auth.loggedIn()) {
+        const { data } = await updateProgress({
+          variables: {
+            activeLevel: nextLevel,
+            completedLevels: updatedCompletedLevels
+          }
+        });
+        
+        if (data?.updateProgress) {
+          console.log('Progress updated in database:', data.updateProgress);
+          // Update localStorage with server response
+          localStorage.setItem('activeLevel', data.updateProgress.activeLevel.toString());
+          localStorage.setItem('completedLevels', JSON.stringify(data.updateProgress.completedLevels));
+        }
+      }
+      
+      setCompletedLevels(updatedCompletedLevels);
+      setCurrentLevel(nextLevel);
+      setShowSkipConfirmation(false);
+      
+      // Navigate to next level
+      navigate(`/unit/${unitId}/lesson/${nextLevel}`, { replace: true });
+    } catch (error) {
+      console.error('Error skipping level:', error);
+    }
+  };
+
+  const handleComplete = async () => {
+    try {
+      const nextLevel = Number(levelId) + 1;
+      console.log('Completing level:', Number(levelId), 'Moving to:', nextLevel);
+      
+      // Update local storage first
+      const updatedCompletedLevels = [...completedLevels, Number(levelId)];
+      localStorage.setItem('completedLevels', JSON.stringify(updatedCompletedLevels));
+      localStorage.setItem('activeLevel', nextLevel.toString());
+      
+      // Always update progress in database
+      if (Auth.loggedIn()) {
+        const { data } = await updateProgress({
+          variables: {
+            activeLevel: nextLevel,
+            completedLevels: updatedCompletedLevels
+          }
+        });
+        
+        if (data?.updateProgress) {
+          console.log('Progress updated in database:', data.updateProgress);
+          // Update localStorage with server response
+          localStorage.setItem('activeLevel', data.updateProgress.activeLevel.toString());
+          localStorage.setItem('completedLevels', JSON.stringify(data.updateProgress.completedLevels));
+        }
+      }
+      
+      setCompletedLevels(updatedCompletedLevels);
+      setCurrentLevel(nextLevel);
+      setShowCompletionPopup(true);
+      
+      // Navigate to next level
+      navigate(`/unit/${unitId}/lesson/${nextLevel}`, { replace: true });
+    } catch (error) {
+      console.error('Error completing level:', error);
+    }
   };
 
   if (!lessonData) {

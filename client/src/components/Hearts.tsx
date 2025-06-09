@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHearts } from '../contexts/HeartsContext';
+import { useHearts } from '../contexts/HeartsContext.jsx';
 
 const Hearts: React.FC = () => {
   const { hearts, timeUntilRegeneration } = useHearts();

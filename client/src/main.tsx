@@ -9,7 +9,7 @@ import {
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
-import { HeartsProvider } from './contexts/HeartsContext';
+import { HeartsProvider } from './contexts/HeartsContext.jsx';
 import { StreakProvider } from './contexts/StreakContext';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
@@ -25,6 +25,8 @@ import LessonLayout from './components/LessonLayout.tsx';
 import Leaderboards from './components/Leaderboards.tsx';
 import Auth from './pages/Auth.tsx';
 import Flirt from './pages/Flirt.tsx';
+import SearchFriends from './pages/SearchFriends';
+import Avatar from './pages/Avatar';
 
 const httpLink = new HttpLink({
   uri: import.meta.env.VITE_SERVER_URL || 'http://localhost:3001/graphql',
@@ -81,26 +83,32 @@ const router = createBrowserRouter([
         index: true,
         element: <Dashboard />
       }, {
-        path: '/login',
+        path: 'login',
         element: <Login />
       }, {
-        path: '/signup',
+        path: 'signup',
         element: <Signup />
       }, {
-        path: '/profiles/:profileId',
+        path: 'profile/:yapperId',
         element: <Profile />
       }, {
-        path: '/me',
+        path: 'me',
         element: <Profile />
       }, {
-        path: '/leaderboards',
+        path: 'leaderboards',
         element: <Leaderboards />
       }, {
-        path: '/auth',
+        path: 'auth',
         element: <Auth />
       }, {
         path: 'flirt',
         element: <Flirt />
+      }, {
+        path: 'search-friends',
+        element: <SearchFriends />
+      }, {
+        path: 'avatar',
+        element: <Avatar />
       }
     ]
   },
