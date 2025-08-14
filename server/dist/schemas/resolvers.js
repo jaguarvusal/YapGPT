@@ -752,6 +752,7 @@ IMPORTANT:
                 const lastLogin = currentUser.lastLoginDate?.split('T')[0];
                 // Calculate new streak based on last login date
                 let newStreak = currentUser.streak;
+                // Only update streak if this is a new day
                 if (lastLogin && lastLogin !== today) {
                     // If last login was yesterday, increment streak
                     const yesterday = new Date();
@@ -759,12 +760,32 @@ IMPORTANT:
                     const yesterdayStr = yesterday.toISOString().split('T')[0];
                     if (lastLogin === yesterdayStr) {
                         newStreak = currentUser.streak + 1;
+                        console.log('Streak incremented: yesterday login detected');
                     }
                     else {
                         // If last login was more than a day ago, reset streak
                         newStreak = 1;
+                        console.log('Streak reset: gap of more than 1 day detected');
                     }
                 }
+                else if (lastLogin === today) {
+                    // Same day login - keep current streak
+                    newStreak = currentUser.streak;
+                    console.log('Same day login - keeping current streak');
+                }
+                else {
+                    // First time login or no lastLoginDate
+                    newStreak = 1;
+                    console.log('First time login or no lastLoginDate - setting streak to 1');
+                }
+                // Add debugging logs
+                console.log('Streak calculation:', {
+                    currentStreak: currentUser.streak,
+                    lastLogin,
+                    today,
+                    newStreak,
+                    lastLoginDate: currentUser.lastLoginDate
+                });
                 const updateData = {
                     hearts,
                     streak: newStreak,

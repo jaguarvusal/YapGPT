@@ -45,22 +45,31 @@ export const StreakProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setStreak(userData.me.streak);
       setLastLoginDate(userData.me.lastLoginDate);
 
-      // Sync with server to update streak if needed
-      updateHeartsAndStreak({
-        variables: {
-          hearts: userData.me.hearts,
-          streak: userData.me.streak,
-          lastLoginDate: today,
-          heartRegenerationTimer: userData.me.heartRegenerationTimer
-        }
-      }).then(({ data }) => {
-        if (data?.updateHeartsAndStreak) {
-          setStreak(data.updateHeartsAndStreak.streak);
-          setLastLoginDate(data.updateHeartsAndStreak.lastLoginDate);
-        }
-      }).catch(error => {
-        console.error('Error updating streak:', error);
-      });
+      // Only sync with server if we haven't already done so today
+      // This prevents multiple API calls on the same day
+      const lastSyncDate = localStorage.getItem('lastStreakSync');
+      if (lastSyncDate !== today) {
+        console.log('Syncing streak with server for date:', today);
+        updateHeartsAndStreak({
+          variables: {
+            hearts: userData.me.hearts,
+            streak: userData.me.streak,
+            lastLoginDate: today,
+            heartRegenerationTimer: userData.me.heartRegenerationTimer
+          }
+        }).then(({ data }) => {
+          if (data?.updateHeartsAndStreak) {
+            console.log('Streak updated from server:', data.updateHeartsAndStreak.streak);
+            setStreak(data.updateHeartsAndStreak.streak);
+            setLastLoginDate(data.updateHeartsAndStreak.lastLoginDate);
+          }
+          localStorage.setItem('lastStreakSync', today);
+        }).catch(error => {
+          console.error('Error updating streak:', error);
+        });
+      } else {
+        console.log('Streak already synced today, skipping API call');
+      }
     }
   }, [userData, updateHeartsAndStreak]);
 
