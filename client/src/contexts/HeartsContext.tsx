@@ -71,8 +71,8 @@ export const HeartsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           updateHeartsAndStreak({
             variables: {
               hearts: 5,
-              streak: parseInt(localStorage.getItem('streak') || '0', 10),
-              lastLoginDate: localStorage.getItem('lastLoginDate'),
+              streak: userData?.me?.streak || 1,
+              lastLoginDate: userData?.me?.lastLoginDate || new Date().toISOString(),
               heartRegenerationTimer: null
             }
           }).catch(error => {
@@ -112,8 +112,8 @@ export const HeartsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateHeartsAndStreak({
           variables: {
             hearts,
-            streak: parseInt(localStorage.getItem('streak') || '0', 10),
-            lastLoginDate: localStorage.getItem('lastLoginDate'),
+            streak: userData?.me?.streak || 1,
+            lastLoginDate: userData?.me?.lastLoginDate || new Date().toISOString(),
             heartRegenerationTimer: timer
           }
         }).catch(error => {
@@ -200,8 +200,8 @@ export const HeartsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await updateHeartsAndStreak({
             variables: {
               hearts: newHearts,
-              streak: parseInt(localStorage.getItem('streak') || '0', 10),
-              lastLoginDate: localStorage.getItem('lastLoginDate'),
+              streak: userData?.me?.streak || 1,
+              lastLoginDate: userData?.me?.lastLoginDate || new Date().toISOString(),
               heartRegenerationTimer: regenerationTime.toString()
             }
           });
@@ -221,8 +221,8 @@ export const HeartsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await updateHeartsAndStreak({
             variables: {
               hearts: newHearts,
-              streak: parseInt(localStorage.getItem('streak') || '0', 10),
-              lastLoginDate: localStorage.getItem('lastLoginDate'),
+              streak: userData?.me?.streak || 1,
+              lastLoginDate: userData?.me?.lastLoginDate || new Date().toISOString(),
               heartRegenerationTimer: null
             }
           });
